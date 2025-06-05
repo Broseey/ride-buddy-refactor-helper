@@ -9,11 +9,13 @@ interface AuthContextType {
   session: Session | null;
   userProfile: any;
   driverProfile: any;
+  adminProfile: any;
   isLoading: boolean;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   driverSignUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>;
   driverSignIn: (email: string, password: string) => Promise<{ error: any }>;
+  adminSignIn: (email: string, password: string) => Promise<{ error: any }>;
   signInWithGoogle: () => Promise<{ error: any }>;
   signOut: () => Promise<void>;
 }
@@ -33,6 +35,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [driverProfile, setDriverProfile] = useState<any>(null);
+  const [adminProfile, setAdminProfile] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -63,6 +66,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 .single();
               
               setDriverProfile(driverProf);
+
+              // Try to fetch admin profile
+              const { data: adminProf } = await supabase
+                .from('admin_users')
+                .select('*')
+                .eq('user_id', session.user.id)
+                .single();
+              
+              setAdminProfile(adminProf);
             } catch (error) {
               console.log('Error fetching profiles:', error);
             }
@@ -70,6 +82,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else {
           setUserProfile(null);
           setDriverProfile(null);
+          setAdminProfile(null);
         }
         
         setIsLoading(false);
@@ -135,6 +148,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { error };
   };
 
+  const adminSignIn = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    return { error };
+  };
+
   const signInWithGoogle = async () => {
     const redirectUrl = `${window.location.origin}/dashboard`;
     
@@ -153,6 +174,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setSession(null);
     setUserProfile(null);
     setDriverProfile(null);
+    setAdminProfile(null);
   };
 
   const value = {
@@ -160,11 +182,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     session,
     userProfile,
     driverProfile,
+    adminProfile,
     isLoading,
     signUp,
     signIn,
     driverSignUp,
     driverSignIn,
+    adminSignIn,
     signInWithGoogle,
     signOut,
   };

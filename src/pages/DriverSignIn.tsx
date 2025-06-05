@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -47,7 +48,11 @@ const DriverSignIn = () => {
 
   useEffect(() => {
     if (user && driverProfile) {
-      navigate(from, { replace: true });
+      if (driverProfile.verification_status === 'verified') {
+        navigate(from, { replace: true });
+      } else {
+        navigate("/driver-dashboard", { replace: true });
+      }
     }
   }, [user, driverProfile, navigate, from]);
 
@@ -70,7 +75,7 @@ const DriverSignIn = () => {
         toast.error(error.message || "Failed to sign in");
       } else {
         toast.success("Successfully signed in!");
-        navigate(from, { replace: true });
+        // Navigation will be handled by useEffect
       }
     } catch (error) {
       toast.error("An unexpected error occurred");
@@ -96,7 +101,7 @@ const DriverSignIn = () => {
   };
 
   const handlePhoneAuthSuccess = () => {
-    navigate(from, { replace: true });
+    navigate("/driver-dashboard", { replace: true });
   };
 
   return (
