@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import {
   Card,
@@ -100,6 +101,7 @@ const RideBookingFormNew = () => {
       departure_time: time,
       seats_requested: passengers,
       booking_type: bookingType,
+      status: 'pending' as const,
       pickup_location: specificLocation || undefined,
       price: undefined // Price will be determined by admin
     };
