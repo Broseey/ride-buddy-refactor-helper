@@ -31,6 +31,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
+// Type definitions
+type BookingStep = 'location' | 'date' | 'vehicle';
+type BookingType = 'join' | 'full';
+
 // Nigerian locations data
 const nigerianLocations = {
   universities: [
