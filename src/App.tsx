@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -22,7 +23,6 @@ import DriverRequirements from "./pages/DriverRequirements";
 import DriverEarnings from "./pages/DriverEarnings";
 import DriverHelp from "./pages/DriverHelp";
 import AdminDashboard from "./pages/AdminDashboard";
-import AdminSignIn from "./pages/AdminSignIn";
 import BookingConfirmation from "./pages/BookingConfirmation";
 import JoinAsCompany from "./pages/JoinAsCompany";
 import NotFound from "./pages/NotFound";
@@ -55,7 +55,6 @@ function App() {
               <Route path="/driver-requirements" element={<DriverRequirements />} />
               <Route path="/driver-earnings" element={<DriverEarnings />} />
               <Route path="/driver-help" element={<DriverHelp />} />
-              <Route path="/admin-signin" element={<AdminSignIn />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/booking-confirmation" element={<BookingConfirmation />} />
               <Route path="/join-as-company" element={<JoinAsCompany />} />
