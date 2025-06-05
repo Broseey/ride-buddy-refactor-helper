@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -27,16 +26,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import RoutePreview from "@/components/RoutePreview";
-
-type BookingStep = 'location' | 'date' | 'vehicle';
-type BookingType = 'join' | 'full';
-
-const vehicles = [
-  { id: 'sienna', name: 'Sienna', capacity: 6, price: 5000 },
-  { id: 'hiace', name: 'Hiace Bus', capacity: 14, price: 7000 },
-  { id: 'long-bus', name: 'Long Bus', capacity: 18, price: 8000 },
-  { id: 'corolla', name: 'Corolla', capacity: 4, price: 3500 },
-];
+import { getLocationSuggestions } from "@/utils/coordinateUtils";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 // Nigerian locations data
 const nigerianLocations = {
@@ -66,6 +59,7 @@ const bookingFormSchema = z.object({
   to: z.string().min(1, "Please select a destination location"),
   fromType: z.enum(["university", "state"]),
   toType: z.enum(["university", "state"]),
+  specificLocation: z.string().optional(),
   date: z.date({
     required_error: "Please select a date",
   }),
@@ -76,10 +70,22 @@ const bookingFormSchema = z.object({
 
 type BookingFormValues = z.infer<typeof bookingFormSchema>;
 
+const vehicles = [
+  { id: 'sienna', name: 'Sienna', capacity: 6, price: 5000 },
+  { id: 'hiace', name: 'Hiace Bus', capacity: 14, price: 7000 },
+  { id: 'long-bus', name: 'Long Bus', capacity: 18, price: 8000 },
+  { id: 'corolla', name: 'Corolla', capacity: 4, price: 3500 },
+];
+
 const RideBookingFormNew = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState<BookingStep>('location');
   const [bookingType, setBookingType] = useState<BookingType>('join');
   const [showPreview, setShowPreview] = useState(false);
+  const [locationSuggestions, setLocationSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [locationQuery, setLocationQuery] = useState("");
   
   // Initialize the form with React Hook Form
   const form = useForm<BookingFormValues>({
@@ -89,6 +95,7 @@ const RideBookingFormNew = () => {
       to: "",
       fromType: "university",
       toType: "state",
+      specificLocation: "",
       time: "",
       passengers: "1",
       vehicleId: "",
@@ -101,14 +108,46 @@ const RideBookingFormNew = () => {
   const watchToType = form.watch("toType");
   const watchVehicleId = form.watch("vehicleId");
   
-  // Check if locations are valid (one university, one state)
+  // Handle location suggestions for "book entire ride"
+  const handleLocationSearch = (query: string) => {
+    setLocationQuery(query);
+    if (bookingType === 'full' && query.length >= 2) {
+      const suggestions = getLocationSuggestions(query, 'city');
+      setLocationSuggestions(suggestions);
+      setShowSuggestions(true);
+    } else {
+      setShowSuggestions(false);
+    }
+  };
+
+  const selectLocationSuggestion = (location: string) => {
+    form.setValue("specificLocation", location);
+    setLocationQuery(location);
+    setShowSuggestions(false);
+  };
+
+  // Check authentication before allowing booking
+  const checkAuthAndProceed = () => {
+    if (!user) {
+      toast.error("Please sign in to book a ride");
+      navigate('/signin');
+      return false;
+    }
+    return true;
+  };
+
   const isLocationStepValid = () => {
-    return (
-      watchFrom && 
+    const baseValid = watchFrom && 
       watchTo && 
       ((watchFromType === 'university' && watchToType === 'state') || 
-       (watchFromType === 'state' && watchToType === 'university'))
-    );
+       (watchFromType === 'state' && watchToType === 'university'));
+    
+    // For "book entire ride", also require specific location
+    if (bookingType === 'full') {
+      return baseValid && form.watch("specificLocation");
+    }
+    
+    return baseValid;
   };
   
   useEffect(() => {
@@ -120,6 +159,8 @@ const RideBookingFormNew = () => {
   
   // Navigation functions
   const nextStep = () => {
+    if (!checkAuthAndProceed()) return;
+    
     if (currentStep === 'location') setCurrentStep('date');
     else if (currentStep === 'date') setCurrentStep('vehicle');
   };
@@ -131,6 +172,8 @@ const RideBookingFormNew = () => {
 
   // Form submission
   const onSubmit = (data: BookingFormValues) => {
+    if (!checkAuthAndProceed()) return;
+    
     console.log('Booking submitted:', { bookingType, ...data });
     window.location.href = '/booking-confirmation';
   };
@@ -149,6 +192,11 @@ const RideBookingFormNew = () => {
     // Reset location selections when types change
     form.setValue("from", "");
     form.setValue("to", "");
+  };
+
+  const getStateBasedLocationLabel = () => {
+    const stateField = watchFromType === 'state' ? watchFrom : watchTo;
+    return `Specific location in ${stateField || 'selected state'}`;
   };
 
   return (
@@ -357,6 +405,50 @@ const RideBookingFormNew = () => {
                     </div>
                   )}
                 </div>
+
+                {/* Specific Location for "Book Entire Ride" */}
+                {bookingType === 'full' && (watchFrom || watchTo) && (
+                  <div className="space-y-3">
+                    <FormField
+                      control={form.control}
+                      name="specificLocation"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{getStateBasedLocationLabel()}</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Input
+                                placeholder="Enter specific location (e.g., Ikeja, Victoria Island)"
+                                value={locationQuery}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  field.onChange(value);
+                                  handleLocationSearch(value);
+                                }}
+                                className="rounded-[2rem]"
+                              />
+                              {showSuggestions && locationSuggestions.length > 0 && (
+                                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-40 overflow-auto">
+                                  {locationSuggestions.map((suggestion, index) => (
+                                    <button
+                                      key={index}
+                                      type="button"
+                                      className="w-full px-3 py-2 text-left hover:bg-gray-100 focus:bg-gray-100"
+                                      onClick={() => selectLocationSuggestion(suggestion)}
+                                    >
+                                      {suggestion}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                )}
                 
                 {/* Route Preview */}
                 {showPreview && isLocationStepValid() && (
@@ -373,7 +465,10 @@ const RideBookingFormNew = () => {
                 
                 {(watchFrom && watchTo && !isLocationStepValid()) && (
                   <div className="text-destructive text-sm mt-2">
-                    You must select a university for one location and a state for the other.
+                    {bookingType === 'full' 
+                      ? "You must select a university for one location, a state for the other, and specify your exact location."
+                      : "You must select a university for one location and a state for the other."
+                    }
                   </div>
                 )}
                 
@@ -565,10 +660,10 @@ const RideBookingFormNew = () => {
                   </Button>
                   <Button 
                     type="submit" 
-                    className="w-1/2 bg-black text-white hover:bg-gray-900 transform active:scale-95 transition-transform duration-200 shadow-md hover:shadow-lg" 
+                    className="w-1/2 bg-black text-white hover:bg-gray-900 transform active:scale-95 transition-transform duration-200"
                     disabled={!watchVehicleId}
                   >
-                    Book Now
+                    {bookingType === 'join' ? 'Join Ride' : 'Book Entire Ride'}
                   </Button>
                 </div>
               </div>

@@ -16,13 +16,15 @@ interface MobileMenuProps {
   isAuthenticated: boolean;
   isMenuOpen: boolean;
   setIsMenuOpen: (open: boolean) => void;
+  isDriver?: boolean;
 }
 
 const MobileMenu = ({ 
   menuItems, 
   isAuthenticated, 
   isMenuOpen, 
-  setIsMenuOpen 
+  setIsMenuOpen,
+  isDriver = false
 }: MobileMenuProps) => (
   <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
     <SheetTrigger asChild>
@@ -34,8 +36,10 @@ const MobileMenu = ({
       <div className="flex flex-col h-full">
         {/* Header with close button */}
         <div className="flex justify-between items-center py-4 px-6 border-b border-gray-700">
-          <Link to="/" onClick={() => setIsMenuOpen(false)}>
-            <span className="text-white font-bold text-2xl tracking-tight">Uniride</span>
+          <Link to={isDriver ? "/drive" : "/"} onClick={() => setIsMenuOpen(false)}>
+            <span className="text-white font-bold text-2xl tracking-tight">
+              {isDriver ? "Uniride Driver" : "Uniride"}
+            </span>
           </Link>
           <SheetClose asChild>
             <Button variant="ghost" size="icon" className="text-white hover:opacity-80 bg-transparent">
@@ -58,7 +62,7 @@ const MobileMenu = ({
           ))}
           {isAuthenticated && (
             <SheetClose asChild>
-              <Link to="/dashboard">
+              <Link to={isDriver ? "/driver-dashboard" : "/dashboard"}>
                 <div className="py-6 px-6 flex items-center hover:bg-gray-900">
                   <User className="mr-5 h-6 w-6" />
                   <span className="text-xl font-medium">Dashboard</span>

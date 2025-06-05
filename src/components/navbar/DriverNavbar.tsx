@@ -55,6 +55,7 @@ const DriverNavbar = () => {
               isAuthenticated={isAuthenticated}
               isMenuOpen={isMenuOpen}
               setIsMenuOpen={setIsMenuOpen}
+              isDriver={true}
             />
           </div>
         ) : (
