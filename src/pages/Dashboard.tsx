@@ -23,7 +23,7 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("home");
   const isMobile = useIsMobile();
   const { userProfile } = useAuth();
-  const { data: rides, isLoading } = useRides();
+  const { rides, isLoading } = useRides();
 
   const userName = userProfile?.full_name?.split(' ')[0] || 'User';
 
