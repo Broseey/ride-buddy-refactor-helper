@@ -1,11 +1,14 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Car, MapPin, Clock, DollarSign, Users, Shield, Star, Smartphone, CheckCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import DriverNavbar from "@/components/navbar/DriverNavbar";
+
 const Drive = () => {
-  return <div className="min-h-screen bg-gray-50">
+  return (
+    <div className="min-h-screen bg-gray-50">
       <DriverNavbar />
       
       {/* Hero Section */}
@@ -27,7 +30,7 @@ const Drive = () => {
                   </Button>
                 </Link>
                 <Link to="/driver-signin">
-                  <Button variant="outline" className="border-white hover:bg-white px-8 py-3 text-lg font-semibold w-full sm:w-auto text-zinc-950">
+                  <Button variant="outline" className="border-white text-white hover:bg-white hover:text-black px-8 py-3 text-lg font-semibold w-full sm:w-auto">
                     Driver Sign in
                   </Button>
                 </Link>
@@ -201,7 +204,7 @@ const Drive = () => {
               </Button>
             </Link>
             <Link to="/driver-signin">
-              <Button variant="outline" className="border-white hover:bg-white px-8 py-3 text-lg font-semibold w-full sm:w-auto text-zinc-950">
+              <Button variant="outline" className="border-white text-white hover:bg-white hover:text-black px-8 py-3 text-lg font-semibold w-full sm:w-auto">
                 Driver Sign in
               </Button>
             </Link>
@@ -215,6 +218,8 @@ const Drive = () => {
           <p className="text-gray-400">© 2024 Uniride. All rights reserved.</p>
         </div>
       </footer>
-    </div>;
+    </div>
+  );
 };
+
 export default Drive;
