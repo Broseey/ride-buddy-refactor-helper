@@ -17,6 +17,7 @@ interface AuthContextType {
   driverSignIn: (email: string, password: string) => Promise<{ error: any }>;
   adminSignIn: (email: string, password: string) => Promise<{ error: any }>;
   signInWithGoogle: () => Promise<{ error: any }>;
+  driverSignInWithGoogle: () => Promise<{ error: any }>;
   signOut: () => Promise<void>;
 }
 
@@ -208,6 +209,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { error };
   };
 
+  const driverSignInWithGoogle = async () => {
+    const redirectUrl = `${window.location.origin}/driver-dashboard`;
+    
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: redirectUrl,
+        queryParams: {
+          is_driver: 'true'
+        }
+      }
+    });
+    return { error };
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
     setUser(null);
@@ -230,6 +246,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     driverSignIn,
     adminSignIn,
     signInWithGoogle,
+    driverSignInWithGoogle,
     signOut,
   };
 

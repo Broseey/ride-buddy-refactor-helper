@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -40,7 +39,7 @@ const formSchema = z.object({
 const DriverSignIn = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { driverSignIn, signInWithGoogle, user, driverProfile } = useAuth();
+  const { driverSignIn, driverSignInWithGoogle, user, driverProfile } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
@@ -48,13 +47,9 @@ const DriverSignIn = () => {
 
   useEffect(() => {
     if (user && driverProfile) {
-      if (driverProfile.verification_status === 'verified') {
-        navigate(from, { replace: true });
-      } else {
-        navigate("/driver-dashboard", { replace: true });
-      }
+      navigate("/driver-dashboard", { replace: true });
     }
-  }, [user, driverProfile, navigate, from]);
+  }, [user, driverProfile, navigate]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -75,7 +70,7 @@ const DriverSignIn = () => {
         toast.error(error.message || "Failed to sign in");
       } else {
         toast.success("Successfully signed in!");
-        // Navigation will be handled by useEffect
+        navigate("/driver-dashboard", { replace: true });
       }
     } catch (error) {
       toast.error("An unexpected error occurred");
@@ -88,10 +83,13 @@ const DriverSignIn = () => {
     setIsGoogleLoading(true);
     
     try {
-      const { error } = await signInWithGoogle();
+      const { error } = await driverSignInWithGoogle();
       
       if (error) {
         toast.error(error.message || "Failed to sign in with Google");
+      } else {
+        // Redirect will happen via useEffect when user state updates
+        toast.success("Successfully signed in!");
       }
     } catch (error) {
       toast.error("An unexpected error occurred");
