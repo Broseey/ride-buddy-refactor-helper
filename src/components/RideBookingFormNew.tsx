@@ -26,7 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import RoutePreview from "@/components/RoutePreview";
-import { getLocationSuggestions } from "@/utils/coordinateUtils";
+import LocationSearchInput from "@/components/LocationSearchInput";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -87,9 +87,6 @@ const RideBookingFormNew = () => {
   const [currentStep, setCurrentStep] = useState<BookingStep>('location');
   const [bookingType, setBookingType] = useState<BookingType>('join');
   const [showPreview, setShowPreview] = useState(false);
-  const [locationSuggestions, setLocationSuggestions] = useState<string[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [locationQuery, setLocationQuery] = useState("");
   
   // Initialize the form with React Hook Form
   const form = useForm<BookingFormValues>({
@@ -112,24 +109,6 @@ const RideBookingFormNew = () => {
   const watchToType = form.watch("toType");
   const watchVehicleId = form.watch("vehicleId");
   
-  // Handle location suggestions for "book entire ride"
-  const handleLocationSearch = (query: string) => {
-    setLocationQuery(query);
-    if (bookingType === 'full' && query.length >= 2) {
-      const suggestions = getLocationSuggestions(query, 'city');
-      setLocationSuggestions(suggestions);
-      setShowSuggestions(true);
-    } else {
-      setShowSuggestions(false);
-    }
-  };
-
-  const selectLocationSuggestion = (location: string) => {
-    form.setValue("specificLocation", location);
-    setLocationQuery(location);
-    setShowSuggestions(false);
-  };
-
   // Check authentication before allowing booking
   const checkAuthAndProceed = () => {
     if (!user) {
@@ -198,9 +177,10 @@ const RideBookingFormNew = () => {
     form.setValue("to", "");
   };
 
-  const getStateBasedLocationLabel = () => {
-    const stateField = watchFromType === 'state' ? watchFrom : watchTo;
-    return `Specific location in ${stateField || 'selected state'}`;
+  const getStateForLocationSearch = () => {
+    if (watchFromType === 'state') return watchFrom;
+    if (watchToType === 'state') return watchTo;
+    return '';
   };
 
   return (
@@ -418,34 +398,15 @@ const RideBookingFormNew = () => {
                       name="specificLocation"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{getStateBasedLocationLabel()}</FormLabel>
+                          <FormLabel>Specific location in {getStateForLocationSearch()}</FormLabel>
                           <FormControl>
-                            <div className="relative">
-                              <Input
-                                placeholder="Enter specific location (e.g., Ikeja, Victoria Island)"
-                                value={locationQuery}
-                                onChange={(e) => {
-                                  const value = e.target.value;
-                                  field.onChange(value);
-                                  handleLocationSearch(value);
-                                }}
-                                className="rounded-[2rem]"
-                              />
-                              {showSuggestions && locationSuggestions.length > 0 && (
-                                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-40 overflow-auto">
-                                  {locationSuggestions.map((suggestion, index) => (
-                                    <button
-                                      key={index}
-                                      type="button"
-                                      className="w-full px-3 py-2 text-left hover:bg-gray-100 focus:bg-gray-100"
-                                      onClick={() => selectLocationSuggestion(suggestion)}
-                                    >
-                                      {suggestion}
-                                    </button>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
+                            <LocationSearchInput
+                              value={field.value || ''}
+                              onChange={field.onChange}
+                              placeholder="Enter specific location (e.g., Ikeja, Victoria Island)"
+                              stateFilter={getStateForLocationSearch()}
+                              className="rounded-[2rem]"
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
