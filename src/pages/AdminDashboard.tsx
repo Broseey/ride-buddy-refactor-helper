@@ -1,86 +1,132 @@
 
 import React, { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  Users, 
+  Truck, 
+  DollarSign, 
+  TrendingUp, 
+  Settings, 
+  LogOut, 
+  Shield,
+  BarChart3,
+  UserCheck,
+  AlertTriangle,
+  MapPin
+} from "lucide-react";
+import { Link } from "react-router-dom";
+import { useAdmin } from "@/hooks/useAdmin";
+import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
-import { Users, Car, MapPin, DollarSign, Settings, BarChart3 } from "lucide-react";
 import LocationManagement from "@/components/admin/LocationManagement";
 
 const AdminDashboard = () => {
-  const [activeTab, setActiveTab] = useState("overview");
+  const { signOut } = useAuth();
+  const { 
+    rides, 
+    rideRequests, 
+    driverProfiles, 
+    userProfiles,
+    approveRideRequest,
+    rejectRideRequest,
+    verifyDriver,
+    rejectDriver 
+  } = useAdmin();
 
-  // Mock data - in real app, this would come from Supabase
-  const stats = {
-    totalUsers: 1248,
-    totalDrivers: 156,
-    activeRides: 23,
-    totalRevenue: 2450000
+  // Mock data for location management - in real app, this would come from your database
+  const [states, setStates] = useState([
+    "Lagos", "Ogun", "Oyo", "FCT - Abuja", "Rivers", "Kaduna", "Kano", "Plateau"
+  ]);
+  
+  const [universities, setUniversities] = useState([
+    "University of Lagos", "University of Ibadan", "Ahmadu Bello University",
+    "University of Nigeria, Nsukka", "Obafemi Awolowo University", "University of Benin",
+    "University of Port Harcourt", "University of Ilorin", "Covenant University, Ota"
+  ]);
+  
+  const [pricingRules, setPricingRules] = useState([
+    { id: "1", from: "Lagos", to: "University of Ibadan", basePrice: 1200 },
+    { id: "2", from: "Abuja", to: "Ahmadu Bello University", basePrice: 1500 },
+    { id: "3", from: "Port Harcourt", to: "University of Port Harcourt", basePrice: 800 }
+  ]);
+
+  const totalUsers = userProfiles?.length || 0;
+  const totalDrivers = driverProfiles?.length || 0;
+  const verifiedDrivers = driverProfiles?.filter(d => d.verification_status === 'verified').length || 0;
+  const pendingDrivers = driverProfiles?.filter(d => d.verification_status === 'pending').length || 0;
+  const totalRides = rides?.length || 0;
+  const completedRides = rides?.filter(r => r.status === 'completed').length || 0;
+  const pendingRequests = rideRequests?.filter(r => r.status === 'pending').length || 0;
+
+  const totalRevenue = rides
+    ?.filter(r => r.status === 'completed')
+    ?.reduce((sum, ride) => sum + (Number(ride.price) || 0), 0) || 0;
+
+  const handleSignOut = async () => {
+    await signOut();
   };
-
-  const recentDrivers = [
-    { id: 1, name: "John Doe", email: "john@example.com", status: "pending", joinedAt: "2024-01-15" },
-    { id: 2, name: "Jane Smith", email: "jane@example.com", status: "verified", joinedAt: "2024-01-14" },
-    { id: 3, name: "Mike Johnson", email: "mike@example.com", status: "rejected", joinedAt: "2024-01-13" },
-  ];
-
-  const recentRides = [
-    { id: 1, from: "University of Lagos", to: "Lagos", status: "completed", price: 5000 },
-    { id: 2, from: "Ahmadu Bello University", to: "Kaduna", status: "active", price: 7500 },
-    { id: 3, from: "University of Ibadan", to: "Oyo", status: "pending", price: 4500 },
-  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="border-b bg-white">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-600 mt-1">Manage your ride-sharing platform</p>
+      {/* Admin Navigation */}
+      <nav className="bg-blue-900 py-4 px-6">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <div className="flex items-center">
+            <Link to="/">
+              <span className="text-white font-bold text-2xl tracking-tight">Uniride Admin</span>
+            </Link>
+          </div>
+          
+          <div className="flex items-center space-x-4">
+            <Button variant="ghost" className="text-white hover:bg-white/10">
+              <Settings className="mr-2 h-4 w-4" />
+              Settings
+            </Button>
+            <Button variant="ghost" className="text-white hover:bg-white/10" onClick={handleSignOut}>
+              <LogOut className="mr-2 h-4 w-4" />
+              Sign Out
+            </Button>
+          </div>
         </div>
-      </div>
+      </nav>
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Welcome Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
+          <p className="text-gray-600">Monitor and manage all platform activities</p>
+        </div>
+
+        <Tabs defaultValue="overview" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="drivers">Drivers</TabsTrigger>
-            <TabsTrigger value="rides">Rides</TabsTrigger>
             <TabsTrigger value="locations">Locations & Pricing</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Overview Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Total Users</CardTitle>
                   <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{stats.totalUsers.toLocaleString()}</div>
-                  <p className="text-xs text-muted-foreground">+12% from last month</p>
+                  <div className="text-2xl font-bold">{totalUsers}</div>
+                  <p className="text-xs text-muted-foreground">Registered users</p>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Drivers</CardTitle>
-                  <Car className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-sm font-medium">Active Drivers</CardTitle>
+                  <Truck className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{stats.totalDrivers}</div>
-                  <p className="text-xs text-muted-foreground">+8% from last month</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Active Rides</CardTitle>
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats.activeRides}</div>
-                  <p className="text-xs text-muted-foreground">Live tracking</p>
+                  <div className="text-2xl font-bold">{verifiedDrivers}</div>
+                  <p className="text-xs text-muted-foreground">{pendingDrivers} pending approval</p>
                 </CardContent>
               </Card>
 
@@ -90,96 +136,161 @@ const AdminDashboard = () => {
                   <DollarSign className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">₦{stats.totalRevenue.toLocaleString()}</div>
-                  <p className="text-xs text-muted-foreground">+18% from last month</p>
+                  <div className="text-2xl font-bold">₦{totalRevenue.toLocaleString()}</div>
+                  <p className="text-xs text-muted-foreground">From {completedRides} completed rides</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Rides</CardTitle>
+                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{totalRides}</div>
+                  <p className="text-xs text-muted-foreground">{completedRides} completed</p>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Recent Activity */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Recent Ride Requests */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Recent Driver Applications</CardTitle>
-                  <CardDescription>Latest driver verification requests</CardDescription>
+                  <CardTitle className="flex items-center">
+                    <AlertTriangle className="mr-2 h-5 w-5" />
+                    Pending Ride Requests ({pendingRequests})
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    {recentDrivers.map((driver) => (
-                      <div key={driver.id} className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium">{driver.name}</p>
-                          <p className="text-sm text-gray-500">{driver.email}</p>
+                  <div className="space-y-4 max-h-64 overflow-y-auto">
+                    {rideRequests?.filter(r => r.status === 'pending').slice(0, 5).map((request) => (
+                      <div key={request.id} className="flex items-center justify-between border-b pb-2">
+                        <div className="flex-1">
+                          <p className="font-medium text-sm">{request.rides?.from_location} → {request.rides?.to_location}</p>
+                          <p className="text-xs text-gray-600">
+                            {request.profiles?.full_name} • {request.request_type}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {new Date(request.created_at).toLocaleDateString()}
+                          </p>
                         </div>
-                        <Badge 
-                          variant={
-                            driver.status === 'verified' ? 'default' : 
-                            driver.status === 'pending' ? 'secondary' : 'destructive'
-                          }
-                        >
-                          {driver.status}
-                        </Badge>
+                        <div className="flex space-x-2">
+                          <Button 
+                            size="sm" 
+                            className="bg-green-600 hover:bg-green-700"
+                            onClick={() => approveRideRequest(request.id)}
+                          >
+                            Approve
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="destructive"
+                            onClick={() => rejectRideRequest(request.id)}
+                          >
+                            Reject
+                          </Button>
+                        </div>
                       </div>
-                    ))}
+                    )) || <p className="text-gray-500 text-sm">No pending requests</p>}
                   </div>
                 </CardContent>
               </Card>
 
+              {/* Driver Verification Requests */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Recent Rides</CardTitle>
-                  <CardDescription>Latest ride bookings and completions</CardDescription>
+                  <CardTitle className="flex items-center">
+                    <UserCheck className="mr-2 h-5 w-5" />
+                    Driver Verification ({pendingDrivers})
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    {recentRides.map((ride) => (
-                      <div key={ride.id} className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium">{ride.from} → {ride.to}</p>
-                          <p className="text-sm text-gray-500">₦{ride.price.toLocaleString()}</p>
+                  <div className="space-y-4 max-h-64 overflow-y-auto">
+                    {driverProfiles?.filter(d => d.verification_status === 'pending').slice(0, 5).map((driver) => (
+                      <div key={driver.id} className="flex items-center justify-between border-b pb-2">
+                        <div className="flex-1">
+                          <p className="font-medium text-sm">{driver.full_name}</p>
+                          <p className="text-xs text-gray-600">{driver.email}</p>
+                          <Badge variant="outline" className="text-xs">
+                            {driver.verification_status}
+                          </Badge>
                         </div>
+                        <div className="flex space-x-2">
+                          <Button 
+                            size="sm" 
+                            className="bg-green-600 hover:bg-green-700"
+                            onClick={() => verifyDriver(driver.id)}
+                          >
+                            Verify
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="destructive"
+                            onClick={() => rejectDriver(driver.id)}
+                          >
+                            Reject
+                          </Button>
+                        </div>
+                      </div>
+                    )) || <p className="text-gray-500 text-sm">No pending verifications</p>}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Recent Rides */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <TrendingUp className="mr-2 h-5 w-5" />
+                  Recent Rides
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4 max-h-80 overflow-y-auto">
+                  {rides?.slice(0, 10).map((ride) => (
+                    <div key={ride.id} className="flex items-center justify-between border-b pb-2">
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">{ride.from_location} → {ride.to_location}</p>
+                        <p className="text-xs text-gray-600">
+                          {new Date(ride.departure_date).toLocaleDateString()} at {ride.departure_time}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          Booked by: {ride.profiles?.full_name}
+                        </p>
+                      </div>
+                      <div className="text-right">
                         <Badge 
-                          variant={
-                            ride.status === 'completed' ? 'default' : 
-                            ride.status === 'active' ? 'secondary' : 'outline'
-                          }
+                          variant={ride.status === 'completed' ? 'default' : 'secondary'}
+                          className={ride.status === 'completed' ? 'bg-green-500' : ''}
                         >
                           {ride.status}
                         </Badge>
+                        {ride.price && (
+                          <p className="text-sm font-medium">₦{Number(ride.price).toLocaleString()}</p>
+                        )}
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="drivers" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Driver Management</CardTitle>
-                <CardDescription>Verify and manage driver applications</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-center text-gray-500 py-8">Driver management interface coming soon...</p>
+                    </div>
+                  )) || <p className="text-gray-500 text-sm">No rides yet</p>}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="rides" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Ride Management</CardTitle>
-                <CardDescription>Monitor and manage all rides on the platform</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-center text-gray-500 py-8">Ride management interface coming soon...</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="locations" className="space-y-6">
-            <LocationManagement />
+          <TabsContent value="locations">
+            <LocationManagement
+              states={states}
+              universities={universities}
+              pricingRules={pricingRules}
+              onAddState={(state) => setStates([...states, state])}
+              onRemoveState={(state) => setStates(states.filter(s => s !== state))}
+              onAddUniversity={(university) => setUniversities([...universities, university])}
+              onRemoveUniversity={(university) => setUniversities(universities.filter(u => u !== university))}
+              onUpdatePricing={(rule) => setPricingRules(pricingRules.map(r => r.id === rule.id ? rule : r))}
+              onAddPricing={(rule) => setPricingRules([...pricingRules, rule])}
+              onRemovePricing={(id) => setPricingRules(pricingRules.filter(r => r.id !== id))}
+            />
           </TabsContent>
         </Tabs>
       </div>
