@@ -17,7 +17,7 @@ import { useRides } from "@/hooks/useRides";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { CalendarPlus } from "lucide-react";
+import { CalendarPlus, Clock, MapPin, Star } from "lucide-react";
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("home");
@@ -72,6 +72,42 @@ const Dashboard = () => {
       <div className="flex-1 px-4 py-6 md:px-6 lg:px-8 max-w-7xl mx-auto w-full">
         <WelcomeHeader name={userName} />
         
+        {/* Trip Status Overview - Simplified */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Rides</CardTitle>
+              <MapPin className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{rides?.length || 0}</div>
+              <p className="text-xs text-muted-foreground">All time</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Upcoming Rides</CardTitle>
+              <Clock className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{upcomingRides.length}</div>
+              <p className="text-xs text-muted-foreground">Scheduled</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Your Rating</CardTitle>
+              <Star className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">4.8</div>
+              <p className="text-xs text-muted-foreground">Based on your trips</p>
+            </CardContent>
+          </Card>
+        </div>
+        
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left column - Main actions and upcoming ride */}
           <div className="lg:col-span-2 space-y-6">
@@ -102,10 +138,9 @@ const Dashboard = () => {
             <QuickRoutes routes={quickRoutes} />
           </div>
           
-          {/* Right column - Real-time activity and account */}
+          {/* Right column - Account and recent activity */}
           <div className="space-y-6">
-            <RealTimeStatus />
-            <LiveActivityFeed />
+            <AccountLinks />
             
             {/* Recent Rides or No Rides Message */}
             {pastRides.length > 0 ? (
@@ -119,11 +154,16 @@ const Dashboard = () => {
                   <p className="text-gray-600 text-sm">
                     No ride history yet. Book your first ride to get started!
                   </p>
+                  <Link to="/">
+                    <Button className="mt-4 bg-black text-white hover:bg-neutral-800">
+                      Book a Ride
+                    </Button>
+                  </Link>
                 </CardContent>
               </Card>
             )}
             
-            <AccountLinks />
+            <RealTimeStatus />
           </div>
         </div>
         

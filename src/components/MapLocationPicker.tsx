@@ -33,16 +33,17 @@ const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
 
     // Dynamically import Mapbox GL
     import('mapbox-gl').then(mapboxgl => {
-      mapboxgl.accessToken = mapboxToken;
+      // Set the access token on the default export
+      (mapboxgl as any).accessToken = mapboxToken;
 
-      map.current = new mapboxgl.Map({
+      map.current = new (mapboxgl as any).Map({
         container: mapContainer.current!,
         style: 'mapbox://styles/mapbox/streets-v11',
         center: [3.3792, 6.5244], // Lagos, Nigeria
         zoom: 10
       });
 
-      map.current.addControl(new mapboxgl.NavigationControl());
+      map.current.addControl(new (mapboxgl as any).NavigationControl());
 
       map.current.on('load', () => {
         setIsLoading(false);
@@ -58,7 +59,7 @@ const MapLocationPicker: React.FC<MapLocationPickerProps> = ({
         }
 
         // Add new marker
-        marker.current = new mapboxgl.Marker({ color: '#000000' })
+        marker.current = new (mapboxgl as any).Marker({ color: '#000000' })
           .setLngLat([lng, lat])
           .addTo(map.current);
 
