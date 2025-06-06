@@ -1,8 +1,12 @@
+
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import AdminRoute from "@/components/auth/AdminRoute";
+import DriverRoute from "@/components/auth/DriverRoute";
 import Index from "./pages/Index";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
@@ -38,14 +42,61 @@ function App() {
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
-              <Route path="/signin" element={<SignIn />} />
-              <Route path="/signup" element={<SignUp />} />
-              <Route path="/driver-signin" element={<DriverSignIn />} />
-              <Route path="/driver-signup" element={<DriverSignUp />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/driver-dashboard" element={<DriverDashboard />} />
-              <Route path="/schedule" element={<Schedule />} />
-              <Route path="/my-rides" element={<MyRides />} />
+              <Route path="/signin" element={
+                <ProtectedRoute requireAuth={false}>
+                  <SignIn />
+                </ProtectedRoute>
+              } />
+              <Route path="/signup" element={
+                <ProtectedRoute requireAuth={false}>
+                  <SignUp />
+                </ProtectedRoute>
+              } />
+              <Route path="/driver-signin" element={
+                <ProtectedRoute requireAuth={false}>
+                  <DriverSignIn />
+                </ProtectedRoute>
+              } />
+              <Route path="/driver-signup" element={
+                <ProtectedRoute requireAuth={false}>
+                  <DriverSignUp />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin-signin" element={
+                <ProtectedRoute requireAuth={false}>
+                  <AdminSignIn />
+                </ProtectedRoute>
+              } />
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/driver-dashboard" element={
+                <DriverRoute>
+                  <DriverDashboard />
+                </DriverRoute>
+              } />
+              <Route path="/schedule" element={
+                <ProtectedRoute>
+                  <Schedule />
+                </ProtectedRoute>
+              } />
+              <Route path="/my-rides" element={
+                <ProtectedRoute>
+                  <MyRides />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin" element={
+                <AdminRoute>
+                  <AdminDashboard />
+                </AdminRoute>
+              } />
+              <Route path="/booking-confirmation" element={
+                <ProtectedRoute>
+                  <BookingConfirmation />
+                </ProtectedRoute>
+              } />
               <Route path="/about" element={<About />} />
               <Route path="/how-it-works" element={<HowItWorks />} />
               <Route path="/help" element={<Help />} />
@@ -55,9 +106,6 @@ function App() {
               <Route path="/driver-requirements" element={<DriverRequirements />} />
               <Route path="/driver-earnings" element={<DriverEarnings />} />
               <Route path="/driver-help" element={<DriverHelp />} />
-              <Route path="/admin-signin" element={<AdminSignIn />} />
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/booking-confirmation" element={<BookingConfirmation />} />
               <Route path="/join-as-company" element={<JoinAsCompany />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

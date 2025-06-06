@@ -44,7 +44,7 @@ const MapContainer: React.FC<MapContainerProps> = ({
         zoom: 6
       });
 
-      map.current.on('load', () => {
+      map.current.on('load', async () => {
         if (!map.current) return;
 
         // Add source markers with custom styling
@@ -76,42 +76,108 @@ const MapContainer: React.FC<MapContainerProps> = ({
           `))
           .addTo(map.current);
 
-        // Add route line
-        map.current.addSource('route', {
-          type: 'geojson',
-          data: {
-            type: 'Feature',
-            properties: {},
-            geometry: {
-              type: 'LineString',
-              coordinates: [fromCoords, toCoords]
+        // Fetch actual route from Mapbox Directions API
+        try {
+          const response = await fetch(
+            `https://api.mapbox.com/directions/v5/mapbox/driving/${fromCoords[0]},${fromCoords[1]};${toCoords[0]},${toCoords[1]}?geometries=geojson&access_token=${mapboxToken}`
+          );
+          
+          if (response.ok) {
+            const data = await response.json();
+            
+            if (data.routes && data.routes.length > 0) {
+              const route = data.routes[0];
+              
+              // Add route source
+              map.current.addSource('route', {
+                type: 'geojson',
+                data: {
+                  type: 'Feature',
+                  properties: {},
+                  geometry: route.geometry
+                }
+              });
+
+              // Add route layer
+              map.current.addLayer({
+                id: 'route',
+                type: 'line',
+                source: 'route',
+                layout: {
+                  'line-join': 'round',
+                  'line-cap': 'round'
+                },
+                paint: {
+                  'line-color': '#FF9900',
+                  'line-width': 4,
+                  'line-opacity': 0.8
+                }
+              });
+
+              // Fit map to route bounds
+              const coordinates = route.geometry.coordinates;
+              const bounds = new mapboxgl.LngLatBounds();
+              coordinates.forEach((coord: [number, number]) => bounds.extend(coord));
+              
+              map.current.fitBounds(bounds, { 
+                padding: 80,
+                maxZoom: 12
+              });
+            } else {
+              // Fallback to straight line if no route found
+              addStraightLineRoute();
             }
+          } else {
+            // Fallback to straight line if API fails
+            addStraightLineRoute();
           }
-        });
+        } catch (error) {
+          console.error('Error fetching route:', error);
+          // Fallback to straight line
+          addStraightLineRoute();
+        }
 
-        map.current.addLayer({
-          id: 'route',
-          type: 'line',
-          source: 'route',
-          layout: {
-            'line-join': 'round',
-            'line-cap': 'round'
-          },
-          paint: {
-            'line-color': '#FF9900',
-            'line-width': 4,
-            'line-opacity': 0.8
-          }
-        });
+        function addStraightLineRoute() {
+          if (!map.current) return;
+          
+          // Add fallback straight line route
+          map.current.addSource('route', {
+            type: 'geojson',
+            data: {
+              type: 'Feature',
+              properties: {},
+              geometry: {
+                type: 'LineString',
+                coordinates: [fromCoords, toCoords]
+              }
+            }
+          });
 
-        // Fit map to show both points with padding
-        const bounds = new mapboxgl.LngLatBounds();
-        bounds.extend(fromCoords);
-        bounds.extend(toCoords);
-        map.current.fitBounds(bounds, { 
-          padding: 80,
-          maxZoom: 10
-        });
+          map.current.addLayer({
+            id: 'route',
+            type: 'line',
+            source: 'route',
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round'
+            },
+            paint: {
+              'line-color': '#FF9900',
+              'line-width': 4,
+              'line-opacity': 0.8,
+              'line-dasharray': [2, 2]
+            }
+          });
+
+          // Fit map to show both points with padding
+          const bounds = new mapboxgl.LngLatBounds();
+          bounds.extend(fromCoords);
+          bounds.extend(toCoords);
+          map.current.fitBounds(bounds, { 
+            padding: 80,
+            maxZoom: 10
+          });
+        }
       });
 
       map.current.on('error', (e) => {
