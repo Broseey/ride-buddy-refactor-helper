@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,6 +15,7 @@ interface AuthContextType {
   driverSignUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>;
   driverSignIn: (email: string, password: string) => Promise<{ error: any }>;
   adminSignIn: (email: string, password: string) => Promise<{ error: any }>;
+  createAdminAccount: (email: string, password: string, fullName: string) => Promise<{ error: any }>;
   signInWithGoogle: () => Promise<{ error: any }>;
   driverSignInWithGoogle: () => Promise<{ error: any }>;
   signOut: () => Promise<void>;
@@ -197,6 +197,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { error };
   };
 
+  const createAdminAccount = async (email: string, password: string, fullName: string) => {
+    try {
+      // First create the user account
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+          }
+        }
+      });
+
+      if (authError) {
+        return { error: authError };
+      }
+
+      if (authData.user) {
+        // Create admin profile
+        const { error: adminError } = await supabase
+          .from('admin_users')
+          .insert({
+            user_id: authData.user.id,
+            admin_level: 'super_admin',
+            is_active: true
+          });
+
+        if (adminError) {
+          return { error: adminError };
+        }
+      }
+
+      return { error: null };
+    } catch (error) {
+      return { error };
+    }
+  };
+
   const signInWithGoogle = async () => {
     const redirectUrl = `${window.location.origin}/dashboard`;
     
@@ -245,6 +283,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     driverSignUp,
     driverSignIn,
     adminSignIn,
+    createAdminAccount,
     signInWithGoogle,
     driverSignInWithGoogle,
     signOut,
