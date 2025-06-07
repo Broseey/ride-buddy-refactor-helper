@@ -1,12 +1,13 @@
 
 import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Users, Car, MapPin, DollarSign, Settings, BarChart3, Building2 } from "lucide-react";
+import { Users, Car, MapPin, DollarSign, Building2 } from "lucide-react";
 import LocationManagement from "@/components/admin/LocationManagement";
 import PricingManagement from "@/components/admin/PricingManagement";
+import RealTimeLocationManager from "@/components/admin/RealTimeLocationManager";
+import RideManagement from "@/components/admin/RideManagement";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -67,7 +68,7 @@ const AdminDashboard = () => {
       <div className="border-b bg-white">
         <div className="max-w-7xl mx-auto px-4 py-6">
           <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-600 mt-1">Manage your ride-sharing platform</p>
+          <p className="text-gray-600 mt-1">Manage your Uniride platform</p>
         </div>
       </div>
 
@@ -75,9 +76,9 @@ const AdminDashboard = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="rides">Rides</TabsTrigger>
             <TabsTrigger value="drivers">Drivers</TabsTrigger>
             <TabsTrigger value="companies">Companies</TabsTrigger>
-            <TabsTrigger value="rides">Rides</TabsTrigger>
             <TabsTrigger value="pricing">Pricing</TabsTrigger>
             <TabsTrigger value="locations">Locations</TabsTrigger>
           </TabsList>
@@ -139,22 +140,26 @@ const AdminDashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {recentDrivers?.map((driver) => (
-                      <div key={driver.id} className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium">{driver.full_name}</p>
-                          <p className="text-sm text-gray-500">{driver.email}</p>
+                    {recentDrivers?.length === 0 ? (
+                      <p className="text-gray-500 text-center py-4">No driver applications yet</p>
+                    ) : (
+                      recentDrivers?.map((driver) => (
+                        <div key={driver.id} className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium">{driver.full_name}</p>
+                            <p className="text-sm text-gray-500">{driver.email}</p>
+                          </div>
+                          <Badge 
+                            variant={
+                              driver.verification_status === 'verified' ? 'default' : 
+                              driver.verification_status === 'pending' ? 'secondary' : 'destructive'
+                            }
+                          >
+                            {driver.verification_status}
+                          </Badge>
                         </div>
-                        <Badge 
-                          variant={
-                            driver.verification_status === 'verified' ? 'default' : 
-                            driver.verification_status === 'pending' ? 'secondary' : 'destructive'
-                          }
-                        >
-                          {driver.verification_status}
-                        </Badge>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -166,26 +171,34 @@ const AdminDashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {recentCompanies?.map((company) => (
-                      <div key={company.id} className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium">{company.company_name}</p>
-                          <p className="text-sm text-gray-500">{company.contact_email}</p>
+                    {recentCompanies?.length === 0 ? (
+                      <p className="text-gray-500 text-center py-4">No company applications yet</p>
+                    ) : (
+                      recentCompanies?.map((company) => (
+                        <div key={company.id} className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium">{company.company_name}</p>
+                            <p className="text-sm text-gray-500">{company.contact_email}</p>
+                          </div>
+                          <Badge 
+                            variant={
+                              company.status === 'approved' ? 'default' : 
+                              company.status === 'pending' ? 'secondary' : 'destructive'
+                            }
+                          >
+                            {company.status}
+                          </Badge>
                         </div>
-                        <Badge 
-                          variant={
-                            company.status === 'approved' ? 'default' : 
-                            company.status === 'pending' ? 'secondary' : 'destructive'
-                          }
-                        >
-                          {company.status}
-                        </Badge>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          <TabsContent value="rides" className="space-y-6">
+            <RideManagement />
           </TabsContent>
 
           <TabsContent value="drivers" className="space-y-6">
@@ -212,24 +225,12 @@ const AdminDashboard = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="rides" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Ride Management</CardTitle>
-                <CardDescription>Monitor and manage all rides on the platform</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-center text-gray-500 py-8">Ride management interface coming soon...</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
           <TabsContent value="pricing" className="space-y-6">
             <PricingManagement />
           </TabsContent>
 
           <TabsContent value="locations" className="space-y-6">
-            <LocationManagement />
+            <RealTimeLocationManager />
           </TabsContent>
         </Tabs>
       </div>
