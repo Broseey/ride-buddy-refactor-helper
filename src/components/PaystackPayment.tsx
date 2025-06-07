@@ -32,7 +32,7 @@ const PaystackPayment: React.FC<PaystackPaymentProps> = ({
     setIsProcessing(true);
     
     // This is a skeletal implementation - you'll need to add your Paystack public key
-    const paystackPublicKey = "pk_test_your_paystack_public_key"; // Replace with your actual key
+    const paystackPublicKey = "pk_test_fd701d387879bd23739ac1bc209e7ba24ea63a8f"; // Replace with your actual key
     
     // Check if Paystack script is loaded
     if (typeof window.PaystackPop === 'undefined') {
