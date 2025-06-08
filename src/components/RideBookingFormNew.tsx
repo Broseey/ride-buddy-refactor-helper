@@ -28,12 +28,15 @@ import {
 import RoutePreview from "@/components/RoutePreview";
 import LocationSearchInput from "@/components/LocationSearchInput";
 import MapLocationPicker from "@/components/MapLocationPicker";
+import PaystackPayment from "@/components/PaystackPayment";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 // Type definitions
-type BookingStep = 'location' | 'date' | 'vehicle';
+type BookingStep = 'location' | 'date' | 'vehicle' | 'payment';
 type BookingType = 'join' | 'full';
 
 // Nigerian locations data
@@ -80,13 +83,6 @@ const bookingFormSchema = z.object({
 
 type BookingFormValues = z.infer<typeof bookingFormSchema>;
 
-const vehicles = [
-  { id: 'sienna', name: 'Sienna', capacity: 6, price: 5000 },
-  { id: 'hiace', name: 'Hiace Bus', capacity: 14, price: 7000 },
-  { id: 'long-bus', name: 'Long Bus', capacity: 18, price: 8000 },
-  { id: 'corolla', name: 'Corolla', capacity: 4, price: 3500 },
-];
-
 const RideBookingFormNew = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -94,6 +90,55 @@ const RideBookingFormNew = () => {
   const [bookingType, setBookingType] = useState<BookingType>('join');
   const [showPreview, setShowPreview] = useState(false);
   const [showMapPicker, setShowMapPicker] = useState(false);
+  const [showPayment, setShowPayment] = useState(false);
+  const [calculatedPrice, setCalculatedPrice] = useState(0);
+  
+  // Fetch pricing data from Supabase
+  const { data: pricingData } = useQuery({
+    queryKey: ['pricing'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('route_pricing')
+        .select('*')
+        .eq('is_active', true);
+      
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Fetch available vehicles
+  const { data: vehicles } = useQuery({
+    queryKey: ['vehicles'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('vehicles')
+        .select('*')
+        .eq('is_active', true);
+      
+      if (error) throw error;
+      return data || [
+        { id: 'sienna', name: 'Sienna', capacity: 6, base_price: 5000 },
+        { id: 'hiace', name: 'Hiace Bus', capacity: 14, base_price: 7000 },
+        { id: 'long-bus', name: 'Long Bus', capacity: 18, base_price: 8000 },
+        { id: 'corolla', name: 'Corolla', capacity: 4, base_price: 3500 },
+      ];
+    },
+  });
+
+  // Get admin-configured travel times
+  const { data: availableTimes } = useQuery({
+    queryKey: ['available-times'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('travel_times')
+        .select('*')
+        .eq('is_active', true);
+      
+      if (error) throw error;
+      return data?.map(t => t.time) || ["08:00", "12:00", "14:00"];
+    },
+  });
   
   // Initialize the form with React Hook Form
   const form = useForm<BookingFormValues>({
@@ -116,6 +161,43 @@ const RideBookingFormNew = () => {
   const watchToType = form.watch("toType");
   const watchVehicleId = form.watch("vehicleId");
   const watchMapLocation = form.watch("mapLocation");
+  const watchPassengers = form.watch("passengers");
+  
+  // Calculate price based on route and vehicle
+  useEffect(() => {
+    if (watchFrom && watchTo && watchVehicleId && pricingData && vehicles) {
+      const selectedVehicle = vehicles.find(v => v.id === watchVehicleId);
+      const routePrice = pricingData.find(p => 
+        (p.from_location === watchFrom && p.to_location === watchTo) ||
+        (p.from_location === watchTo && p.to_location === watchFrom)
+      );
+      
+      if (selectedVehicle && routePrice) {
+        let basePrice = routePrice.base_price;
+        
+        if (bookingType === 'full') {
+          // 10% discount for full ride booking
+          basePrice = basePrice * 0.9;
+        } else {
+          // Per seat pricing
+          basePrice = Math.round(basePrice / selectedVehicle.capacity) * parseInt(watchPassengers);
+        }
+        
+        setCalculatedPrice(basePrice);
+      } else if (selectedVehicle) {
+        // Fallback to vehicle base price
+        let basePrice = selectedVehicle.base_price;
+        
+        if (bookingType === 'full') {
+          basePrice = basePrice * 0.9;
+        } else {
+          basePrice = Math.round(basePrice / selectedVehicle.capacity) * parseInt(watchPassengers);
+        }
+        
+        setCalculatedPrice(basePrice);
+      }
+    }
+  }, [watchFrom, watchTo, watchVehicleId, watchPassengers, bookingType, pricingData, vehicles]);
   
   // Check authentication before allowing booking
   const checkAuthAndProceed = () => {
@@ -154,23 +236,60 @@ const RideBookingFormNew = () => {
     
     if (currentStep === 'location') setCurrentStep('date');
     else if (currentStep === 'date') setCurrentStep('vehicle');
+    else if (currentStep === 'vehicle') setCurrentStep('payment');
   };
 
   const prevStep = () => {
-    if (currentStep === 'vehicle') setCurrentStep('date');
+    if (currentStep === 'payment') setCurrentStep('vehicle');
+    else if (currentStep === 'vehicle') setCurrentStep('date');
     else if (currentStep === 'date') setCurrentStep('location');
+  };
+
+  // Handle payment success
+  const handlePaymentSuccess = async (reference: string) => {
+    try {
+      const formData = form.getValues();
+      const selectedVehicle = vehicles?.find(v => v.id === formData.vehicleId);
+      
+      // Create ride booking
+      const { data: booking, error } = await supabase
+        .from('rides')
+        .insert({
+          user_id: user?.id,
+          from_location: formData.from,
+          to_location: formData.to,
+          departure_date: format(formData.date, 'yyyy-MM-dd'),
+          departure_time: formData.time,
+          seats_requested: parseInt(formData.passengers),
+          booking_type: bookingType,
+          price: calculatedPrice,
+          status: 'confirmed',
+          pickup_location: formData.specificLocation || formData.mapLocation?.address,
+          payment_reference: reference
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast.success("Booking confirmed! Redirecting to dashboard...");
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 2000);
+    } catch (error) {
+      console.error('Error creating booking:', error);
+      toast.error("Error creating booking. Please contact support.");
+    }
   };
 
   // Form submission
   const onSubmit = (data: BookingFormValues) => {
     if (!checkAuthAndProceed()) return;
-    
-    console.log('Booking submitted:', { bookingType, ...data });
-    window.location.href = '/booking-confirmation';
+    setShowPayment(true);
   };
 
   // Find selected vehicle
-  const selectedVehicle = vehicles.find(v => v.id === watchVehicleId);
+  const selectedVehicle = vehicles?.find(v => v.id === watchVehicleId);
 
   // Toggle location type
   const toggleLocationType = (field: "fromType" | "toType", value: "university" | "state") => {
@@ -197,6 +316,25 @@ const RideBookingFormNew = () => {
     form.setValue("specificLocation", "");
   };
 
+  if (showPayment) {
+    const formData = form.getValues();
+    return (
+      <PaystackPayment
+        amount={calculatedPrice + 500} // Add booking fee
+        email={user?.email || ""}
+        onSuccess={handlePaymentSuccess}
+        onCancel={() => setShowPayment(false)}
+        rideDetails={{
+          from: formData.from,
+          to: formData.to,
+          date: format(formData.date, 'PPP'),
+          time: formData.time,
+          passengers: parseInt(formData.passengers)
+        }}
+      />
+    );
+  }
+
   return (
     <>
       <Card className="w-full mx-auto md:mx-0 max-w-lg shadow-lg hover:shadow-xl transition-all duration-300">
@@ -205,7 +343,7 @@ const RideBookingFormNew = () => {
           
           <Tabs value={bookingType} onValueChange={(v) => setBookingType(v as BookingType)} className="mb-6 rounded-[3.5rem]">
             <TabsList className="grid w-full grid-cols-2 rounded-[2rem]">
-              <TabsTrigger value="join" className="data-[state=active]:bg-black data-[state=active]:text-white hover:bg-gray-100 transition-colors rounded-[1.5rem]">Join a Ride</TabsTrigger>
+              <TabsTrigger value="join" className="data-[state=active]:bg-black data-[state=active]:text-white hover:bg-gray-100 transition-colors rounded-[1.5rem]">Book Seat</TabsTrigger>
               <TabsTrigger value="full" className="data-[state=active]:bg-black data-[state=active]:text-white hover:bg-gray-100 transition-colors rounded-[1.5rem]">Book Entire Ride</TabsTrigger>
             </TabsList>
           </Tabs>
@@ -224,11 +362,15 @@ const RideBookingFormNew = () => {
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 ${currentStep === 'vehicle' ? 'bg-black text-white' : 'bg-gray-200'} transition-all duration-300`}>3</div>
                 <span className="text-xs">Vehicle</span>
               </div>
+              <div className={`flex flex-col items-center ${currentStep === 'payment' ? 'text-black' : 'text-gray-400'}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 ${currentStep === 'payment' ? 'bg-black text-white' : 'bg-gray-200'} transition-all duration-300`}>4</div>
+                <span className="text-xs">Payment</span>
+              </div>
             </div>
             <div className="mt-2 h-1 bg-gray-200 rounded-full">
               <div 
                 className="h-full bg-black rounded-full transition-all duration-500" 
-                style={{ width: currentStep === 'location' ? '33.3%' : currentStep === 'date' ? '66.6%' : '100%' }}
+                style={{ width: currentStep === 'location' ? '25%' : currentStep === 'date' ? '50%' : currentStep === 'vehicle' ? '75%' : '100%' }}
               ></div>
             </div>
           </div>
@@ -556,7 +698,7 @@ const RideBookingFormNew = () => {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {["06:00", "08:00", "10:00", "12:00", "14:00", "16:00", "18:00", "20:00"].map((time) => (
+                            {(availableTimes || ["08:00", "12:00", "14:00"]).map((time) => (
                               <SelectItem key={time} value={time}>{time}</SelectItem>
                             ))}
                           </SelectContent>
@@ -639,7 +781,7 @@ const RideBookingFormNew = () => {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {vehicles.map(vehicle => (
+                            {(vehicles || []).map(vehicle => (
                               <SelectItem key={vehicle.id} value={vehicle.id}>
                                 {vehicle.name} - {vehicle.capacity} seats
                               </SelectItem>
@@ -656,9 +798,9 @@ const RideBookingFormNew = () => {
                       <h3 className="font-semibold">{selectedVehicle.name}</h3>
                       <div className="text-sm text-gray-600 mt-1">
                         <p>Capacity: {selectedVehicle.capacity} passengers</p>
-                        <p>Price: ₦{selectedVehicle.price.toLocaleString()}</p>
-                        {bookingType === 'join' && (
-                          <p>Your Price: ₦{Math.round(selectedVehicle.price / selectedVehicle.capacity).toLocaleString()} per person</p>
+                        <p>Price: ₦{calculatedPrice.toLocaleString()}</p>
+                        {bookingType === 'full' && (
+                          <p className="text-green-600">10% discount applied for full ride booking!</p>
                         )}
                       </div>
                     </div>
@@ -678,7 +820,7 @@ const RideBookingFormNew = () => {
                       className="w-1/2 bg-black text-white hover:bg-gray-900 transform active:scale-95 transition-transform duration-200"
                       disabled={!watchVehicleId}
                     >
-                      {bookingType === 'join' ? 'Join Ride' : 'Book Entire Ride'}
+                      {bookingType === 'join' ? 'Book Seat' : 'Book Entire Ride'}
                     </Button>
                   </div>
                 </div>
