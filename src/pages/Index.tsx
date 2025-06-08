@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -9,11 +8,11 @@ import RideBookingFormNew from "@/components/RideBookingFormNew";
 import AvailableRides from "@/components/AvailableRides";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-
 const Index = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
-
+  const {
+    user
+  } = useAuth();
   const handleBookRideClick = () => {
     if (!user) {
       toast.error("Please sign in to book a ride");
@@ -22,9 +21,7 @@ const Index = () => {
     }
     // If user is authenticated, they can use the booking form directly
   };
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
+  return <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
       <Navbar />
       
       {/* Hero Section */}
@@ -43,21 +40,12 @@ const Index = () => {
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button 
-                  size="lg" 
-                  className="bg-black text-white hover:bg-gray-800 px-8 py-3 text-lg font-medium transform hover:scale-105 transition-all duration-200"
-                  onClick={handleBookRideClick}
-                >
+                <Button size="lg" className="bg-black text-white hover:bg-gray-800 px-8 py-3 text-lg font-medium transform hover:scale-105 transition-all duration-200" onClick={handleBookRideClick}>
                   Book a Ride
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
                 
-                <Button 
-                  variant="outline" 
-                  size="lg" 
-                  className="border-black text-black hover:bg-black hover:text-white px-8 py-3 text-lg font-medium transition-all duration-200"
-                  onClick={() => navigate('/drive')}
-                >
+                <Button variant="outline" size="lg" className="border-black text-black hover:bg-black hover:text-white px-8 py-3 text-lg font-medium transition-all duration-200" onClick={() => navigate('/drive')}>
                   Become a Driver
                 </Button>
               </div>
@@ -179,20 +167,10 @@ const Index = () => {
             Join thousands of students who trust Uniride for their campus travel needs.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              size="lg" 
-              variant="secondary"
-              className="bg-white text-black hover:bg-gray-100 px-8 py-3 text-lg font-medium"
-              onClick={handleBookRideClick}
-            >
+            <Button size="lg" variant="secondary" className="bg-white text-black hover:bg-gray-100 px-8 py-3 text-lg font-medium" onClick={handleBookRideClick}>
               Book Your First Ride
             </Button>
-            <Button 
-              size="lg" 
-              variant="outline"
-              className="border-white text-white hover:bg-white hover:text-black px-8 py-3 text-lg font-medium"
-              onClick={() => navigate('/drive')}
-            >
+            <Button size="lg" variant="outline" onClick={() => navigate('/drive')} className="border-white hover:bg-white px-8 py-3 text-lg font-medium text-zinc-950">
               Start Driving
             </Button>
           </div>
@@ -205,8 +183,6 @@ const Index = () => {
           <p>© 2025 Uniride. All rights reserved.</p>
         </div>
       </footer>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
