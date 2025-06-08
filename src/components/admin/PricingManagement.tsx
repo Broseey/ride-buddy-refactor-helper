@@ -1,350 +1,278 @@
 
 import React, { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Plus, Edit, Trash2, DollarSign } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { Edit, Trash2, Plus, DollarSign } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-const formSchema = z.object({
-  fromLocation: z.string().min(1, "From location is required"),
-  toLocation: z.string().min(1, "To location is required"),
-  vehicleType: z.string().min(1, "Vehicle type is required"),
-  basePrice: z.number().min(0, "Base price must be positive"),
-  pricePerKm: z.number().min(0, "Price per km must be positive"),
-});
+// Sample pricing data
+const samplePricing = [
+  {
+    id: 1,
+    fromState: "Lagos",
+    toUniversity: "University of Ibadan",
+    vehicleType: "Toyota Sienna",
+    basePrice: 1200,
+    isActive: true
+  },
+  {
+    id: 2,
+    fromState: "Abuja",
+    toUniversity: "Ahmadu Bello University",
+    vehicleType: "Toyota Hiace",
+    basePrice: 1500,
+    isActive: true
+  },
+  {
+    id: 3,
+    fromState: "Port Harcourt",
+    toUniversity: "University of Port Harcourt",
+    vehicleType: "Toyota Corolla",
+    basePrice: 800,
+    isActive: true
+  }
+];
 
 const PricingManagement = () => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingPrice, setEditingPrice] = useState<any>(null);
-  const queryClient = useQueryClient();
-
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      fromLocation: "",
-      toLocation: "",
-      vehicleType: "",
-      basePrice: 0,
-      pricePerKm: 0,
-    },
+  const [pricing, setPricing] = useState(samplePricing);
+  const [isCreating, setIsCreating] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [newPricing, setNewPricing] = useState({
+    fromState: '',
+    toUniversity: '',
+    vehicleType: '',
+    basePrice: ''
   });
 
-  // Fetch pricing rules
-  const { data: pricingRules, isLoading } = useQuery({
-    queryKey: ['pricing-rules'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('pricing_rules')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return data;
-    },
-  });
+  const states = [
+    'Lagos', 'Abuja', 'Port Harcourt', 'Kano', 'Ibadan', 'Kaduna',
+    'Benin City', 'Maiduguri', 'Zaria', 'Aba', 'Jos', 'Ilorin'
+  ];
 
-  // Create pricing rule
-  const createPricingRule = useMutation({
-    mutationFn: async (values: z.infer<typeof formSchema>) => {
-      const { error } = await supabase
-        .from('pricing_rules')
-        .insert({
-          from_location: values.fromLocation,
-          to_location: values.toLocation,
-          vehicle_type: values.vehicleType,
-          base_price: values.basePrice,
-          price_per_km: values.pricePerKm,
-        });
-      
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pricing-rules'] });
-      toast.success('Pricing rule created successfully');
-      setIsDialogOpen(false);
-      form.reset();
-    },
-    onError: () => {
-      toast.error('Failed to create pricing rule');
-    },
-  });
+  const universities = [
+    'University of Ibadan', 'Ahmadu Bello University', 'University of Port Harcourt',
+    'University of Lagos', 'Obafemi Awolowo University', 'University of Nigeria Nsukka',
+    'Bayero University Kano', 'University of Benin', 'Covenant University',
+    'Federal University of Technology Akure', 'University of Ilorin'
+  ];
 
-  // Update pricing rule
-  const updatePricingRule = useMutation({
-    mutationFn: async ({ id, values }: { id: string; values: z.infer<typeof formSchema> }) => {
-      const { error } = await supabase
-        .from('pricing_rules')
-        .update({
-          from_location: values.fromLocation,
-          to_location: values.toLocation,
-          vehicle_type: values.vehicleType,
-          base_price: values.basePrice,
-          price_per_km: values.pricePerKm,
-        })
-        .eq('id', id);
-      
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pricing-rules'] });
-      toast.success('Pricing rule updated successfully');
-      setIsDialogOpen(false);
-      setEditingPrice(null);
-      form.reset();
-    },
-    onError: () => {
-      toast.error('Failed to update pricing rule');
-    },
-  });
+  const vehicleTypes = [
+    'Toyota Sienna', 'Toyota Hiace', 'Toyota Corolla', 'Honda Pilot',
+    'Mercedes Sprinter', 'Nissan Urvan'
+  ];
 
-  // Delete pricing rule
-  const deletePricingRule = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('pricing_rules')
-        .update({ is_active: false })
-        .eq('id', id);
-      
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pricing-rules'] });
-      toast.success('Pricing rule deleted successfully');
-    },
-    onError: () => {
-      toast.error('Failed to delete pricing rule');
-    },
-  });
-
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    if (editingPrice) {
-      updatePricingRule.mutate({ id: editingPrice.id, values });
-    } else {
-      createPricingRule.mutate(values);
+  const handleCreate = () => {
+    if (!newPricing.fromState || !newPricing.toUniversity || 
+        !newPricing.vehicleType || !newPricing.basePrice) {
+      toast.error('Please fill in all fields');
+      return;
     }
+
+    const newItem = {
+      id: pricing.length + 1,
+      fromState: newPricing.fromState,
+      toUniversity: newPricing.toUniversity,
+      vehicleType: newPricing.vehicleType,
+      basePrice: parseFloat(newPricing.basePrice),
+      isActive: true
+    };
+
+    setPricing([...pricing, newItem]);
+    setNewPricing({ fromState: '', toUniversity: '', vehicleType: '', basePrice: '' });
+    setIsCreating(false);
+    toast.success('Pricing rule created successfully');
   };
 
-  const handleEdit = (rule: any) => {
-    setEditingPrice(rule);
-    form.setValue('fromLocation', rule.from_location);
-    form.setValue('toLocation', rule.to_location);
-    form.setValue('vehicleType', rule.vehicle_type);
-    form.setValue('basePrice', rule.base_price);
-    form.setValue('pricePerKm', rule.price_per_km);
-    setIsDialogOpen(true);
+  const handleToggleActive = (id: number) => {
+    setPricing(pricing.map(item => 
+      item.id === id ? { ...item, isActive: !item.isActive } : item
+    ));
+    toast.success('Pricing rule updated');
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this pricing rule?')) {
-      deletePricingRule.mutate(id);
+  const handleDelete = (id: number) => {
+    setPricing(pricing.filter(item => item.id !== id));
+    toast.success('Pricing rule deleted');
+  };
+
+  const handlePriceUpdate = (id: number, newPrice: string) => {
+    const price = parseFloat(newPrice);
+    if (isNaN(price) || price <= 0) {
+      toast.error('Please enter a valid price');
+      return;
     }
+
+    setPricing(pricing.map(item => 
+      item.id === id ? { ...item, basePrice: price } : item
+    ));
+    setEditingId(null);
+    toast.success('Price updated successfully');
   };
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-          <CardTitle className="flex items-center gap-2">
-            <DollarSign className="h-5 w-5" />
-            Pricing Management
-          </CardTitle>
-          <CardDescription>
-            Set up pricing rules for different routes and vehicle types
-          </CardDescription>
-        </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => { setEditingPrice(null); form.reset(); }}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Pricing Rule
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>
-                {editingPrice ? 'Edit Pricing Rule' : 'Add New Pricing Rule'}
-              </DialogTitle>
-              <DialogDescription>
-                Set the pricing for a specific route and vehicle type
-              </DialogDescription>
-            </DialogHeader>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="fromLocation"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>From Location</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Lagos" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="toLocation"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>To Location</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Ibadan" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+    <div className="space-y-6">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Route Pricing Management</CardTitle>
+          <Button onClick={() => setIsCreating(true)} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Add New Route
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {isCreating && (
+            <div className="mb-6 p-4 border rounded-lg bg-gray-50">
+              <h4 className="font-medium mb-4">Create New Pricing Rule</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                  <Label>From State</Label>
+                  <Select value={newPricing.fromState} onValueChange={(value) => 
+                    setNewPricing({...newPricing, fromState: value})
+                  }>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select state" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {states.map(state => (
+                        <SelectItem key={state} value={state}>{state}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                <FormField
-                  control={form.control}
-                  name="vehicleType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Vehicle Type</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select vehicle type" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="sedan">Sedan</SelectItem>
-                          <SelectItem value="suv">SUV</SelectItem>
-                          <SelectItem value="bus">Bus</SelectItem>
-                          <SelectItem value="minibus">Mini Bus</SelectItem>
-                          <SelectItem value="luxury">Luxury</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="basePrice"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Base Price (₦)</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="number" 
-                            placeholder="5000"
-                            {...field}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="pricePerKm"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Price per KM (₦)</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="number" 
-                            placeholder="50"
-                            {...field}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                <div>
+                  <Label>To University</Label>
+                  <Select value={newPricing.toUniversity} onValueChange={(value) => 
+                    setNewPricing({...newPricing, toUniversity: value})
+                  }>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select university" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {universities.map(uni => (
+                        <SelectItem key={uni} value={uni}>{uni}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                <div className="flex justify-end gap-2">
-                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                    Cancel
+                <div>
+                  <Label>Vehicle Type</Label>
+                  <Select value={newPricing.vehicleType} onValueChange={(value) => 
+                    setNewPricing({...newPricing, vehicleType: value})
+                  }>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select vehicle" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {vehicleTypes.map(vehicle => (
+                        <SelectItem key={vehicle} value={vehicle}>{vehicle}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label>Base Price (₦)</Label>
+                  <Input
+                    type="number"
+                    placeholder="1200"
+                    value={newPricing.basePrice}
+                    onChange={(e) => setNewPricing({...newPricing, basePrice: e.target.value})}
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2 mt-4">
+                <Button onClick={handleCreate}>Create</Button>
+                <Button variant="outline" onClick={() => setIsCreating(false)}>Cancel</Button>
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-4">
+            {pricing.map((item) => (
+              <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div>
+                    <p className="font-medium">{item.fromState}</p>
+                    <p className="text-sm text-gray-500">From</p>
+                  </div>
+                  <div>
+                    <p className="font-medium">{item.toUniversity}</p>
+                    <p className="text-sm text-gray-500">To</p>
+                  </div>
+                  <div>
+                    <p className="font-medium">{item.vehicleType}</p>
+                    <p className="text-sm text-gray-500">Vehicle</p>
+                  </div>
+                  <div>
+                    {editingId === item.id ? (
+                      <div className="flex gap-2">
+                        <Input
+                          type="number"
+                          defaultValue={item.basePrice}
+                          className="w-24"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              handlePriceUpdate(item.id, (e.target as HTMLInputElement).value);
+                            }
+                          }}
+                        />
+                        <Button 
+                          size="sm" 
+                          onClick={() => {
+                            const input = document.querySelector(`input[defaultValue="${item.basePrice}"]`) as HTMLInputElement;
+                            handlePriceUpdate(item.id, input.value);
+                          }}
+                        >
+                          Save
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium">₦{item.basePrice.toLocaleString()}</p>
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          onClick={() => setEditingId(item.id)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
+                    <p className="text-sm text-gray-500">Base Price</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <Badge variant={item.isActive ? "default" : "secondary"}>
+                    {item.isActive ? "Active" : "Inactive"}
+                  </Badge>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleToggleActive(item.id)}
+                  >
+                    {item.isActive ? "Disable" : "Enable"}
                   </Button>
-                  <Button type="submit" disabled={createPricingRule.isPending || updatePricingRule.isPending}>
-                    {editingPrice ? 'Update' : 'Create'} Rule
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => handleDelete(item.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="text-center py-4">Loading pricing rules...</div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Route</TableHead>
-                <TableHead>Vehicle Type</TableHead>
-                <TableHead>Base Price</TableHead>
-                <TableHead>Price/KM</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {pricingRules?.map((rule) => (
-                <TableRow key={rule.id}>
-                  <TableCell>
-                    {rule.from_location} → {rule.to_location}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="capitalize">
-                      {rule.vehicle_type}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>₦{rule.base_price.toLocaleString()}</TableCell>
-                  <TableCell>₦{rule.price_per_km}</TableCell>
-                  <TableCell>
-                    <Badge variant={rule.is_active ? "default" : "secondary"}>
-                      {rule.is_active ? "Active" : "Inactive"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEdit(rule)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDelete(rule.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </CardContent>
-    </Card>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

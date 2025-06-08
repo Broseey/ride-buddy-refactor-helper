@@ -31,8 +31,8 @@ const PaystackPayment: React.FC<PaystackPaymentProps> = ({
   const initializePaystack = () => {
     setIsProcessing(true);
     
-    // This is a skeletal implementation - you'll need to add your Paystack public key
-    const paystackPublicKey = "pk_test_fd701d387879bd23739ac1bc209e7ba24ea63a8f"; // Replace with your actual key
+    // Use the existing Paystack public key
+    const paystackPublicKey = "pk_test_fd701d387879bd23739ac1bc209e7ba24ea63a8f";
     
     // Check if Paystack script is loaded
     if (typeof window.PaystackPop === 'undefined') {
@@ -69,6 +69,7 @@ const PaystackPayment: React.FC<PaystackPaymentProps> = ({
       callback: function(response: any) {
         setIsProcessing(false);
         toast.success("Payment successful!");
+        console.log("Payment successful:", response);
         onSuccess(response.reference);
       },
       onClose: function() {
@@ -154,14 +155,6 @@ const PaystackPayment: React.FC<PaystackPaymentProps> = ({
           >
             Cancel Payment
           </Button>
-        </div>
-
-        {/* Setup Instructions */}
-        <div className="bg-blue-50 p-3 rounded-lg">
-          <p className="text-xs text-blue-700">
-            <strong>Setup Note:</strong> To enable payments, add your Paystack public key to the PaystackPayment component 
-            and include the Paystack script in your HTML.
-          </p>
         </div>
 
         {/* Payment Methods */}

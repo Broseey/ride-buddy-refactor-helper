@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin, Clock, Users, Shield, Star, ArrowRight } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import RideBookingFormNew from "@/components/RideBookingFormNew";
+import AvailableRides from "@/components/AvailableRides";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
@@ -85,6 +86,24 @@ const Index = () => {
           </div>
         </div>
       </div>
+
+      {/* Available Rides Section */}
+      <section className="py-16 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Available Rides
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Join other students on their journey. Book your seat on rides that match your route.
+            </p>
+          </div>
+          
+          <div className="flex justify-center">
+            <AvailableRides />
+          </div>
+        </div>
+      </section>
       
       {/* Features Section */}
       <section className="py-20 bg-gray-50">
@@ -179,6 +198,13 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* Footer */}
+      <footer className="bg-white py-6">
+        <div className="max-w-7xl mx-auto px-4 text-center text-gray-500">
+          <p>© 2025 Uniride. All rights reserved.</p>
+        </div>
+      </footer>
     </div>
   );
 };

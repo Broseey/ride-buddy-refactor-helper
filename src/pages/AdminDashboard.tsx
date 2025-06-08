@@ -1,90 +1,61 @@
 
 import React, { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Users, Car, MapPin, DollarSign, Building2 } from "lucide-react";
-import LocationManagement from "@/components/admin/LocationManagement";
-import PricingManagement from "@/components/admin/PricingManagement";
-import RealTimeLocationManager from "@/components/admin/RealTimeLocationManager";
+import { Users, Car, MapPin, DollarSign, TrendingUp, Activity } from "lucide-react";
+import Navbar from "@/components/Navbar";
 import RideManagement from "@/components/admin/RideManagement";
+import RealTimeLocationManager from "@/components/admin/RealTimeLocationManager";
+import CreateRide from "@/components/admin/CreateRide";
+import PricingManagement from "@/components/admin/PricingManagement";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
 
-  // Fetch dashboard stats
+  // Fetch admin stats
   const { data: stats } = useQuery({
     queryKey: ['admin-stats'],
     queryFn: async () => {
-      const [usersResult, driversResult, ridesResult, companiesResult] = await Promise.all([
+      const [ridesResponse, usersResponse, driversResponse] = await Promise.all([
+        supabase.from('rides').select('id, status', { count: 'exact' }),
         supabase.from('profiles').select('id', { count: 'exact' }),
-        supabase.from('driver_profiles').select('id', { count: 'exact' }),
-        supabase.from('rides').select('id', { count: 'exact' }),
-        supabase.from('ride_companies').select('id', { count: 'exact' })
+        supabase.from('driver_profiles').select('id', { count: 'exact' })
       ]);
 
       return {
-        totalUsers: usersResult.count || 0,
-        totalDrivers: driversResult.count || 0,
-        totalRides: ridesResult.count || 0,
-        totalCompanies: companiesResult.count || 0,
+        totalRides: ridesResponse.count || 0,
+        totalUsers: usersResponse.count || 0,
+        totalDrivers: driversResponse.count || 0,
+        activeRides: ridesResponse.data?.filter(ride => 
+          ride.status === 'confirmed' || ride.status === 'pending'
+        ).length || 0
       };
-    },
-  });
-
-  // Fetch recent activities
-  const { data: recentDrivers } = useQuery({
-    queryKey: ['recent-drivers'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('driver_profiles')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(5);
-      
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const { data: recentCompanies } = useQuery({
-    queryKey: ['recent-companies'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('ride_companies')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(5);
-      
-      if (error) throw error;
-      return data;
     },
   });
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="border-b bg-white">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-600 mt-1">Manage your Uniride platform</p>
-        </div>
-      </div>
-
+      <Navbar />
+      
       <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+          <p className="text-gray-600 mt-2">Manage your Uniride platform</p>
+        </div>
+
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="rides">Rides</TabsTrigger>
-            <TabsTrigger value="drivers">Drivers</TabsTrigger>
-            <TabsTrigger value="companies">Companies</TabsTrigger>
+            <TabsTrigger value="create-ride">Create Ride</TabsTrigger>
             <TabsTrigger value="pricing">Pricing</TabsTrigger>
             <TabsTrigger value="locations">Locations</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
-            {/* Stats Cards */}
+            {/* Stats Overview */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -93,40 +64,40 @@ const AdminDashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{stats?.totalUsers || 0}</div>
-                  <p className="text-xs text-muted-foreground">Registered passengers</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Drivers</CardTitle>
-                  <Car className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats?.totalDrivers || 0}</div>
-                  <p className="text-xs text-muted-foreground">Active drivers</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Companies</CardTitle>
-                  <Building2 className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats?.totalCompanies || 0}</div>
-                  <p className="text-xs text-muted-foreground">Partner companies</p>
+                  <p className="text-xs text-muted-foreground">Registered students</p>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Total Rides</CardTitle>
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                  <Car className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{stats?.totalRides || 0}</div>
-                  <p className="text-xs text-muted-foreground">All time rides</p>
+                  <p className="text-xs text-muted-foreground">All time bookings</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Active Rides</CardTitle>
+                  <Activity className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats?.activeRides || 0}</div>
+                  <p className="text-xs text-muted-foreground">Currently active</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Drivers</CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats?.totalDrivers || 0}</div>
+                  <p className="text-xs text-muted-foreground">Registered drivers</p>
                 </CardContent>
               </Card>
             </div>
@@ -135,101 +106,98 @@ const AdminDashboard = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Recent Driver Applications</CardTitle>
-                  <CardDescription>Latest driver verification requests</CardDescription>
+                  <CardTitle>Recent Activity</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {recentDrivers?.length === 0 ? (
-                      <p className="text-gray-500 text-center py-4">No driver applications yet</p>
-                    ) : (
-                      recentDrivers?.map((driver) => (
-                        <div key={driver.id} className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium">{driver.full_name}</p>
-                            <p className="text-sm text-gray-500">{driver.email}</p>
-                          </div>
-                          <Badge 
-                            variant={
-                              driver.verification_status === 'verified' ? 'default' : 
-                              driver.verification_status === 'pending' ? 'secondary' : 'destructive'
-                            }
-                          >
-                            {driver.verification_status}
-                          </Badge>
-                        </div>
-                      ))
-                    )}
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <div className="text-sm">
+                        <p className="font-medium">New user registered</p>
+                        <p className="text-gray-500">2 minutes ago</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <div className="text-sm">
+                        <p className="font-medium">Ride booked: Lagos → UI</p>
+                        <p className="text-gray-500">5 minutes ago</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                      <div className="text-sm">
+                        <p className="font-medium">Driver verification pending</p>
+                        <p className="text-gray-500">15 minutes ago</p>
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Recent Company Applications</CardTitle>
-                  <CardDescription>Latest partnership requests</CardDescription>
+                  <CardTitle>Quick Actions</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    {recentCompanies?.length === 0 ? (
-                      <p className="text-gray-500 text-center py-4">No company applications yet</p>
-                    ) : (
-                      recentCompanies?.map((company) => (
-                        <div key={company.id} className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium">{company.company_name}</p>
-                            <p className="text-sm text-gray-500">{company.contact_email}</p>
-                          </div>
-                          <Badge 
-                            variant={
-                              company.status === 'approved' ? 'default' : 
-                              company.status === 'pending' ? 'secondary' : 'destructive'
-                            }
-                          >
-                            {company.status}
-                          </Badge>
+                  <div className="space-y-3">
+                    <button 
+                      onClick={() => setActiveTab("create-ride")}
+                      className="w-full text-left p-3 rounded-lg bg-black text-white hover:bg-gray-800 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Car className="h-5 w-5" />
+                        <div>
+                          <p className="font-medium">Create New Ride</p>
+                          <p className="text-sm opacity-80">Add a new ride for users to join</p>
                         </div>
-                      ))
-                    )}
+                      </div>
+                    </button>
+                    
+                    <button 
+                      onClick={() => setActiveTab("pricing")}
+                      className="w-full text-left p-3 rounded-lg border hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <DollarSign className="h-5 w-5" />
+                        <div>
+                          <p className="font-medium">Manage Pricing</p>
+                          <p className="text-sm text-gray-500">Update route pricing</p>
+                        </div>
+                      </div>
+                    </button>
+                    
+                    <button 
+                      onClick={() => setActiveTab("locations")}
+                      className="w-full text-left p-3 rounded-lg border hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <MapPin className="h-5 w-5" />
+                        <div>
+                          <p className="font-medium">Manage Locations</p>
+                          <p className="text-sm text-gray-500">Add/remove states & universities</p>
+                        </div>
+                      </div>
+                    </button>
                   </div>
                 </CardContent>
               </Card>
             </div>
           </TabsContent>
 
-          <TabsContent value="rides" className="space-y-6">
+          <TabsContent value="rides">
             <RideManagement />
           </TabsContent>
 
-          <TabsContent value="drivers" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Driver Management</CardTitle>
-                <CardDescription>Verify and manage driver applications</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-center text-gray-500 py-8">Driver management interface coming soon...</p>
-              </CardContent>
-            </Card>
+          <TabsContent value="create-ride">
+            <CreateRide />
           </TabsContent>
 
-          <TabsContent value="companies" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Company Management</CardTitle>
-                <CardDescription>Manage partner companies and their applications</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-center text-gray-500 py-8">Company management interface coming soon...</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="pricing" className="space-y-6">
+          <TabsContent value="pricing">
             <PricingManagement />
           </TabsContent>
 
-          <TabsContent value="locations" className="space-y-6">
+          <TabsContent value="locations">
             <RealTimeLocationManager />
           </TabsContent>
         </Tabs>

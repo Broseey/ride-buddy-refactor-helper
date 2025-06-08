@@ -15,68 +15,30 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Clock, MapPin, Calendar, Car, Navigation } from "lucide-react";
+import { Clock, MapPin, Calendar, Car, Navigation, CalendarPlus } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useRides } from "@/hooks/useRides";
 
 const MyRides = () => {
   const [activeTab, setActiveTab] = useState("upcoming");
+  const { rides, isLoading } = useRides();
 
-  const upcomingRides = [
-    {
-      id: "ride-001",
-      from: "Lagos",
-      to: "University of Ibadan",
-      date: "May 20, 2023",
-      time: "09:00 AM",
-      price: "₦1,200",
-      vehicle: "Sienna",
-      vehicleColor: "Silver",
-      licensePlate: "ABC-123XY",
-      status: "confirmed"
-    },
-    {
-      id: "ride-002",
-      from: "Abuja",
-      to: "Ahmadu Bello University",
-      date: "May 25, 2023",
-      time: "08:30 AM",
-      price: "₦1,500",
-      vehicle: "Hiace Bus",
-      vehicleColor: "White",
-      licensePlate: "DEF-456XY",
-      status: "pending"
-    }
-  ];
+  // Separate upcoming and past rides from real data
+  const upcomingRides = rides?.filter(ride => 
+    ride.status === 'confirmed' || ride.status === 'pending'
+  ) || [];
+  
+  const pastRides = rides?.filter(ride => 
+    ride.status === 'completed'
+  ) || [];
 
-  const pastRides = [
-    {
-      id: "ride-003",
-      from: "Port Harcourt",
-      to: "University of Port Harcourt",
-      date: "May 5, 2023",
-      time: "02:00 PM",
-      price: "₦800",
-      status: "completed"
-    },
-    {
-      id: "ride-004",
-      from: "Lagos",
-      to: "University of Lagos",
-      date: "April 28, 2023",
-      time: "10:30 AM",
-      price: "₦1,000",
-      status: "completed"
-    },
-    {
-      id: "ride-005",
-      from: "Ibadan",
-      to: "Lagos",
-      date: "April 22, 2023",
-      time: "08:00 AM",
-      price: "₦1,200",
-      status: "cancelled"
-    }
-  ];
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-black"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -87,8 +49,8 @@ const MyRides = () => {
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-8">
-            <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
-            <TabsTrigger value="past">Past</TabsTrigger>
+            <TabsTrigger value="upcoming">Upcoming ({upcomingRides.length})</TabsTrigger>
+            <TabsTrigger value="past">Past ({pastRides.length})</TabsTrigger>
           </TabsList>
           
           <TabsContent value="upcoming" className="space-y-4">
@@ -97,7 +59,7 @@ const MyRides = () => {
                 <Card key={ride.id} className="overflow-hidden">
                   <CardHeader className="pb-2 flex flex-row justify-between items-center">
                     <CardTitle className="text-lg">
-                      {ride.from} to {ride.to}
+                      {ride.from_location} to {ride.to_location}
                     </CardTitle>
                     <Badge 
                       variant={ride.status === "confirmed" ? "default" : "secondary"}
@@ -111,20 +73,20 @@ const MyRides = () => {
                       <div className="flex items-center text-sm space-x-4">
                         <div className="flex items-center">
                           <Calendar className="h-4 w-4 mr-1" />
-                          <span>{ride.date}</span>
+                          <span>{ride.departure_date}</span>
                         </div>
                         <div className="flex items-center">
                           <Clock className="h-4 w-4 mr-1" />
-                          <span>{ride.time}</span>
+                          <span>{ride.departure_time}</span>
                         </div>
                         <div className="flex items-center">
                           <Car className="h-4 w-4 mr-1" />
-                          <span>{ride.vehicle}</span>
+                          <span>{ride.seats_requested} seat(s)</span>
                         </div>
                       </div>
                       
                       <div className="font-bold text-lg">
-                        {ride.price}
+                        ₦{ride.price || 'TBD'}
                       </div>
                       
                       <div className="flex space-x-2 pt-2">
@@ -142,7 +104,11 @@ const MyRides = () => {
               ))
             ) : (
               <div className="text-center py-12">
-                <p className="text-gray-500 mb-4">You don't have any upcoming rides.</p>
+                <div className="mb-4">
+                  <CalendarPlus className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-600 mb-2">No Upcoming Rides</h3>
+                  <p className="text-gray-500 mb-6">You don't have any upcoming rides scheduled. Book your next journey now!</p>
+                </div>
                 <Link to="/">
                   <Button className="bg-black text-white hover:bg-neutral-800">
                     Book a Ride
@@ -153,50 +119,63 @@ const MyRides = () => {
           </TabsContent>
           
           <TabsContent value="past" className="space-y-4">
-            {pastRides.map((ride) => (
-              <Card key={ride.id} className="overflow-hidden">
-                <CardHeader className="pb-2 flex flex-row justify-between items-center">
-                  <CardTitle className="text-lg">
-                    {ride.from} to {ride.to}
-                  </CardTitle>
-                  <Badge 
-                    variant={ride.status === "completed" ? "outline" : "destructive"}
-                    className={ride.status === "completed" ? "border-green-500 text-green-500" : ""}
-                  >
-                    {ride.status.charAt(0).toUpperCase() + ride.status.slice(1)}
-                  </Badge>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center text-sm space-x-4">
-                      <div className="flex items-center">
-                        <Calendar className="h-4 w-4 mr-1" />
-                        <span>{ride.date}</span>
+            {pastRides.length > 0 ? (
+              pastRides.map((ride) => (
+                <Card key={ride.id} className="overflow-hidden">
+                  <CardHeader className="pb-2 flex flex-row justify-between items-center">
+                    <CardTitle className="text-lg">
+                      {ride.from_location} to {ride.to_location}
+                    </CardTitle>
+                    <Badge 
+                      variant="outline"
+                      className="border-green-500 text-green-500"
+                    >
+                      {ride.status.charAt(0).toUpperCase() + ride.status.slice(1)}
+                    </Badge>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex items-center text-sm space-x-4">
+                        <div className="flex items-center">
+                          <Calendar className="h-4 w-4 mr-1" />
+                          <span>{ride.departure_date}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <Clock className="h-4 w-4 mr-1" />
+                          <span>{ride.departure_time}</span>
+                        </div>
                       </div>
-                      <div className="flex items-center">
-                        <Clock className="h-4 w-4 mr-1" />
-                        <span>{ride.time}</span>
+                      
+                      <div className="font-bold text-lg">
+                        ₦{ride.price || 'N/A'}
                       </div>
-                    </div>
-                    
-                    <div className="font-bold text-lg">
-                      {ride.price}
-                    </div>
-                    
-                    <div className="flex space-x-2 pt-2">
-                      <Button variant="outline" size="sm" className="border-black text-black hover:bg-black hover:text-white">
-                        View Details
-                      </Button>
-                      {ride.status === "completed" && (
+                      
+                      <div className="flex space-x-2 pt-2">
+                        <Button variant="outline" size="sm" className="border-black text-black hover:bg-black hover:text-white">
+                          View Details
+                        </Button>
                         <Button variant="outline" size="sm" className="border-black text-black hover:bg-black hover:text-white">
                           Book Again
                         </Button>
-                      )}
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              <div className="text-center py-12">
+                <div className="mb-4">
+                  <Clock className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-600 mb-2">No Past Rides</h3>
+                  <p className="text-gray-500 mb-6">You haven't completed any rides yet. Your travel history will appear here after your first journey.</p>
+                </div>
+                <Link to="/">
+                  <Button className="bg-black text-white hover:bg-neutral-800">
+                    Book Your First Ride
+                  </Button>
+                </Link>
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </div>
