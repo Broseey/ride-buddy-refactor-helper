@@ -3,115 +3,44 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
-import ProtectedRoute from "@/components/auth/ProtectedRoute";
-import AdminRoute from "@/components/auth/AdminRoute";
-import DriverRoute from "@/components/auth/DriverRoute";
 import Index from "./pages/Index";
+import Schedule from "./pages/Schedule";
+import Dashboard from "./pages/Dashboard";
+import About from "./pages/About";
+import Contact from "./pages/Contact";
+import Profile from "./pages/Profile";
+import Available from "./pages/Available";
+import Partner from "./pages/Partner";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
-import DriverSignIn from "./pages/DriverSignIn";
-import DriverSignUp from "./pages/DriverSignUp";
-import Dashboard from "./pages/Dashboard";
-import DriverDashboard from "./pages/DriverDashboard";
-import Schedule from "./pages/Schedule";
-import MyRides from "./pages/MyRides";
-import About from "./pages/About";
-import HowItWorks from "./pages/HowItWorks";
-import Help from "./pages/Help";
-import TermsAndConditions from "./pages/TermsAndConditions";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import Drive from "./pages/Drive";
-import DriverRequirements from "./pages/DriverRequirements";
-import DriverEarnings from "./pages/DriverEarnings";
-import DriverHelp from "./pages/DriverHelp";
 import AdminDashboard from "./pages/AdminDashboard";
-import AdminSignIn from "./pages/AdminSignIn";
-import BookingConfirmation from "./pages/BookingConfirmation";
-import JoinAsCompany from "./pages/JoinAsCompany";
-import NotFound from "./pages/NotFound";
+import { AuthProvider } from "./contexts/AuthContext";
 
 const queryClient = new QueryClient();
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <AuthProvider>
+      <AuthProvider>
+        <TooltipProvider>
           <Toaster />
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
-              <Route path="/signin" element={
-                <ProtectedRoute requireAuth={false}>
-                  <SignIn />
-                </ProtectedRoute>
-              } />
-              <Route path="/signup" element={
-                <ProtectedRoute requireAuth={false}>
-                  <SignUp />
-                </ProtectedRoute>
-              } />
-              <Route path="/driver-signin" element={
-                <ProtectedRoute requireAuth={false}>
-                  <DriverSignIn />
-                </ProtectedRoute>
-              } />
-              <Route path="/driver-signup" element={
-                <ProtectedRoute requireAuth={false}>
-                  <DriverSignUp />
-                </ProtectedRoute>
-              } />
-              <Route path="/admin-signin" element={
-                <ProtectedRoute requireAuth={false}>
-                  <AdminSignIn />
-                </ProtectedRoute>
-              } />
-              <Route path="/dashboard" element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              } />
-              <Route path="/driver-dashboard" element={
-                <DriverRoute>
-                  <DriverDashboard />
-                </DriverRoute>
-              } />
-              <Route path="/schedule" element={
-                <ProtectedRoute>
-                  <Schedule />
-                </ProtectedRoute>
-              } />
-              <Route path="/my-rides" element={
-                <ProtectedRoute>
-                  <MyRides />
-                </ProtectedRoute>
-              } />
-              <Route path="/admin" element={
-                <AdminRoute>
-                  <AdminDashboard />
-                </AdminRoute>
-              } />
-              <Route path="/booking-confirmation" element={
-                <ProtectedRoute>
-                  <BookingConfirmation />
-                </ProtectedRoute>
-              } />
+              <Route path="/schedule" element={<Schedule />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/available" element={<Available />} />
               <Route path="/about" element={<About />} />
-              <Route path="/how-it-works" element={<HowItWorks />} />
-              <Route path="/help" element={<Help />} />
-              <Route path="/terms" element={<TermsAndConditions />} />
-              <Route path="/privacy" element={<PrivacyPolicy />} />
-              <Route path="/drive" element={<Drive />} />
-              <Route path="/driver-requirements" element={<DriverRequirements />} />
-              <Route path="/driver-earnings" element={<DriverEarnings />} />
-              <Route path="/driver-help" element={<DriverHelp />} />
-              <Route path="/join-as-company" element={<JoinAsCompany />} />
-              <Route path="*" element={<NotFound />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/partner" element={<Partner />} />
+              <Route path="/signin" element={<SignIn />} />
+              <Route path="/signup" element={<SignUp />} />
+              <Route path="/admin" element={<AdminDashboard />} />
             </Routes>
           </BrowserRouter>
-        </AuthProvider>
-      </TooltipProvider>
+        </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
