@@ -49,14 +49,21 @@ const Dashboard = () => {
     };
   }, [refetch]);
 
-  // Separate upcoming and past rides
-  const upcomingRides = rides?.filter(ride => 
-    ride.status === 'confirmed' || ride.status === 'pending'
-  ) || [];
+  // Separate upcoming and past rides based on current date
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const upcomingRides = rides?.filter(ride => {
+    const rideDate = new Date(ride.departure_date);
+    rideDate.setHours(0, 0, 0, 0);
+    return (ride.status === 'confirmed' || ride.status === 'pending') && rideDate >= today;
+  }) || [];
   
-  const pastRides = rides?.filter(ride => 
-    ride.status === 'completed'
-  ) || [];
+  const pastRides = rides?.filter(ride => {
+    const rideDate = new Date(ride.departure_date);
+    rideDate.setHours(0, 0, 0, 0);
+    return ride.status === 'completed' || rideDate < today;
+  }) || [];
 
   const nextUpcomingRide = upcomingRides[0] || null;
 

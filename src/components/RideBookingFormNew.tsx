@@ -29,8 +29,9 @@ import RoutePreview from "@/components/RoutePreview";
 import LocationSearchInput from "@/components/LocationSearchInput";
 import MapLocationPicker from "@/components/MapLocationPicker";
 import PaystackPayment from "@/components/PaystackPayment";
+import VehicleOptions from "@/components/VehicleOptions";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -86,6 +87,7 @@ type BookingFormValues = z.infer<typeof bookingFormSchema>;
 const RideBookingFormNew = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [currentStep, setCurrentStep] = useState<BookingStep>('location');
   const [bookingType, setBookingType] = useState<BookingType>('join');
   const [showPreview, setShowPreview] = useState(false);
@@ -154,6 +156,24 @@ const RideBookingFormNew = () => {
       vehicleId: "",
     },
   });
+  
+  // Handle prefilled route from location state
+  useEffect(() => {
+    if (location.state?.prefilledRoute) {
+      const { from, to } = location.state.prefilledRoute;
+      form.setValue("from", from);
+      form.setValue("to", to);
+      
+      // Determine types based on content
+      if (from.includes("University") || from.includes("university")) {
+        form.setValue("fromType", "university");
+        form.setValue("toType", "state");
+      } else {
+        form.setValue("fromType", "state");
+        form.setValue("toType", "university");
+      }
+    }
+  }, [location.state, form]);
   
   const watchFrom = form.watch("from");
   const watchTo = form.watch("to");
@@ -762,35 +782,9 @@ const RideBookingFormNew = () => {
 
               {currentStep === 'vehicle' && (
                 <div className="space-y-4">
-                  {/* Vehicle Selection */}
-                  <FormField
-                    control={form.control}
-                    name="vehicleId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Select Vehicle</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                          value={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger className="flex items-center hover:border-black transition-colors rounded-[2rem]">
-                              <Car className="mr-2 h-5 w-5 text-gray-500" />
-                              <SelectValue placeholder="Select a vehicle" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {(vehicles || []).map(vehicle => (
-                              <SelectItem key={vehicle.id} value={vehicle.id}>
-                                {vehicle.name} - {vehicle.capacity} seats
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                  <VehicleOptions
+                    selectedVehicle={watchVehicleId}
+                    onSelect={(id) => form.setValue("vehicleId", id)}
                   />
 
                   {selectedVehicle && (

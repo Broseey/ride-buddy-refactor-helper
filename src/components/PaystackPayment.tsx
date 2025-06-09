@@ -35,7 +35,7 @@ const PaystackPayment: React.FC<PaystackPaymentProps> = ({
     const paystackPublicKey = "pk_test_fd701d387879bd23739ac1bc209e7ba24ea63a8f";
     
     // Check if Paystack script is loaded
-    if (typeof window.PaystackPop === 'undefined') {
+    if (typeof window.PaystackPop === 'undefined' || !window.PaystackPop) {
       toast.error("Payment system not loaded. Please refresh and try again.");
       setIsProcessing(false);
       return;

@@ -27,7 +27,7 @@ const QuickRoutes = ({ routes }: { routes: RouteProps[] }) => {
         <div className="space-y-2">
           {routes.map((route, index) => (
             <Link 
-              to="/schedule" 
+              to="/" 
               key={index}
               state={{ 
                 prefilledRoute: {

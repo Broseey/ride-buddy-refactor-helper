@@ -1,18 +1,20 @@
-
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MapPin, Clock, Users, Shield, Star, ArrowRight, Sparkles, Target, Zap, Search } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import RideBookingFormNew from "@/components/RideBookingFormNew";
 import AvailableRides from "@/components/AvailableRides";
+import HowItWorksSection from "@/components/HowItWorksSection";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
 const Index = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [activeContentTab, setActiveContentTab] = useState("rides");
 
   const handleBookRideClick = () => {
     if (!user) {
@@ -133,21 +135,36 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Available Rides Section */}
+      {/* Available Rides and How It Works Section */}
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Available Rides
-            </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Join other students on their journey. Book your seat on rides that match your route.
-            </p>
-          </div>
-          
-          <div className="flex justify-center">
-            <AvailableRides />
-          </div>
+          <Tabs value={activeContentTab} onValueChange={setActiveContentTab} className="w-full">
+            <div className="text-center mb-8">
+              <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
+                <TabsTrigger value="rides">Available Rides</TabsTrigger>
+                <TabsTrigger value="how-it-works">How It Works</TabsTrigger>
+              </TabsList>
+            </div>
+            
+            <TabsContent value="rides" className="space-y-8">
+              <div className="text-center">
+                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                  Available Rides
+                </h2>
+                <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+                  Join other students on their journey. Book your seat on rides that match your route.
+                </p>
+              </div>
+              
+              <div className="flex justify-center">
+                <AvailableRides />
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="how-it-works">
+              <HowItWorksSection />
+            </TabsContent>
+          </Tabs>
         </div>
       </section>
       
