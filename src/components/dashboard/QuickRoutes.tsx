@@ -26,7 +26,16 @@ const QuickRoutes = ({ routes }: { routes: RouteProps[] }) => {
       <CardContent>
         <div className="space-y-2">
           {routes.map((route, index) => (
-            <Link to="/book" key={index}>
+            <Link 
+              to="/schedule" 
+              key={index}
+              state={{ 
+                prefilledRoute: {
+                  from: route.from,
+                  to: route.to
+                }
+              }}
+            >
               <div className="flex items-center justify-between p-3 rounded-md hover:bg-gray-50 cursor-pointer transition-colors">
                 <div className="flex items-center">
                   <div className="min-w-[24px] mr-4 flex flex-col items-center">

@@ -7,7 +7,7 @@ export const useRides = () => {
   const queryClient = useQueryClient();
 
   // Fetch rides for the current user
-  const { data: rides, isLoading, error } = useQuery({
+  const { data: rides, isLoading, error, refetch } = useQuery({
     queryKey: ['rides'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -76,6 +76,7 @@ export const useRides = () => {
     rides,
     isLoading,
     error,
+    refetch,
     createRide,
     updateRideStatus,
   };

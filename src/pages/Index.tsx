@@ -1,18 +1,19 @@
+
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, Clock, Users, Shield, Star, ArrowRight } from "lucide-react";
+import { MapPin, Clock, Users, Shield, Star, ArrowRight, Sparkles, Target, Zap } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import RideBookingFormNew from "@/components/RideBookingFormNew";
 import AvailableRides from "@/components/AvailableRides";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+
 const Index = () => {
   const navigate = useNavigate();
-  const {
-    user
-  } = useAuth();
+  const { user } = useAuth();
+
   const handleBookRideClick = () => {
     if (!user) {
       toast.error("Please sign in to book a ride");
@@ -21,7 +22,9 @@ const Index = () => {
     }
     // If user is authenticated, they can use the booking form directly
   };
-  return <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
       <Navbar />
       
       {/* Hero Section */}
@@ -30,38 +33,93 @@ const Index = () => {
           {/* Left Column - Content */}
           <div className="space-y-8">
             <div className="space-y-6">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="bg-black rounded-full p-2">
+                  <Sparkles className="h-4 w-4 text-white" />
+                </div>
+                <span className="text-sm font-medium text-gray-600">
+                  {user ? `Welcome back!` : `Nigeria's #1 Student Ride Platform`}
+                </span>
+              </div>
+
               <h1 className="text-4xl md:text-6xl font-bold text-gray-900 leading-tight">
-                Campus Rides
-                <span className="block text-black">Made Simple</span>
+                {user ? (
+                  <>
+                    Ready for your
+                    <span className="block text-black">next journey?</span>
+                  </>
+                ) : (
+                  <>
+                    Campus Rides
+                    <span className="block text-black">Made Simple</span>
+                  </>
+                )}
               </h1>
               
               <p className="text-xl text-gray-600 leading-relaxed">
-                Connect with fellow students for safe, affordable rides between universities and cities across Nigeria.
+                {user ? (
+                  "Book your ride, join available trips, or explore new routes with fellow students across Nigeria."
+                ) : (
+                  "Connect with fellow students for safe, affordable rides between universities and cities across Nigeria."
+                )}
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button size="lg" className="bg-black text-white hover:bg-gray-800 px-8 py-3 text-lg font-medium transform hover:scale-105 transition-all duration-200" onClick={handleBookRideClick}>
-                  Book a Ride
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                <Button 
+                  size="lg" 
+                  className="bg-black text-white hover:bg-gray-800 px-8 py-3 text-lg font-medium transform hover:scale-105 transition-all duration-200" 
+                  onClick={handleBookRideClick}
+                >
+                  <Target className="mr-2 h-5 w-5" />
+                  {user ? "Book Another Ride" : "Book a Ride"}
                 </Button>
                 
-                <Button variant="outline" size="lg" className="border-black text-black hover:bg-black hover:text-white px-8 py-3 text-lg font-medium transition-all duration-200" onClick={() => navigate('/drive')}>
-                  Become a Driver
-                </Button>
+                {!user && (
+                  <Button 
+                    variant="outline" 
+                    size="lg" 
+                    className="border-black text-black hover:bg-black hover:text-white px-8 py-3 text-lg font-medium transition-all duration-200" 
+                    onClick={() => navigate('/drive')}
+                  >
+                    <Zap className="mr-2 h-5 w-5" />
+                    Become a Driver
+                  </Button>
+                )}
+
+                {user && (
+                  <Button 
+                    variant="outline" 
+                    size="lg" 
+                    className="border-black text-black hover:bg-black hover:text-white px-8 py-3 text-lg font-medium transition-all duration-200" 
+                    onClick={() => navigate('/available')}
+                  >
+                    <Search className="mr-2 h-5 w-5" />
+                    Browse Rides
+                  </Button>
+                )}
               </div>
             </div>
             
-            {/* Stats */}
+            {/* Illustration/Stats */}
             <div className="grid grid-cols-3 gap-6 pt-8">
               <div className="text-center">
+                <div className="bg-green-100 rounded-full p-4 w-16 h-16 mx-auto mb-3 flex items-center justify-center">
+                  <Users className="h-8 w-8 text-green-600" />
+                </div>
                 <div className="text-3xl font-bold text-black">10K+</div>
                 <div className="text-sm text-gray-600">Happy Students</div>
               </div>
               <div className="text-center">
+                <div className="bg-blue-100 rounded-full p-4 w-16 h-16 mx-auto mb-3 flex items-center justify-center">
+                  <MapPin className="h-8 w-8 text-blue-600" />
+                </div>
                 <div className="text-3xl font-bold text-black">50+</div>
                 <div className="text-sm text-gray-600">Universities</div>
               </div>
               <div className="text-center">
+                <div className="bg-purple-100 rounded-full p-4 w-16 h-16 mx-auto mb-3 flex items-center justify-center">
+                  <Shield className="h-8 w-8 text-purple-600" />
+                </div>
                 <div className="text-3xl font-bold text-black">99%</div>
                 <div className="text-sm text-gray-600">Safety Rate</div>
               </div>
@@ -108,7 +166,7 @@ const Index = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <Card className="text-center hover:shadow-lg transition-shadow duration-300 border-0 bg-white">
               <CardHeader>
-                <div className="w-16 h-16 bg-black rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 bg-gradient-to-r from-green-400 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Shield className="h-8 w-8 text-white" />
                 </div>
                 <CardTitle className="text-xl font-semibold">Verified Drivers</CardTitle>
@@ -120,7 +178,7 @@ const Index = () => {
             
             <Card className="text-center hover:shadow-lg transition-shadow duration-300 border-0 bg-white">
               <CardHeader>
-                <div className="w-16 h-16 bg-black rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 bg-gradient-to-r from-blue-400 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
                   <MapPin className="h-8 w-8 text-white" />
                 </div>
                 <CardTitle className="text-xl font-semibold">Campus Routes</CardTitle>
@@ -132,7 +190,7 @@ const Index = () => {
             
             <Card className="text-center hover:shadow-lg transition-shadow duration-300 border-0 bg-white">
               <CardHeader>
-                <div className="w-16 h-16 bg-black rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 bg-gradient-to-r from-purple-400 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Clock className="h-8 w-8 text-white" />
                 </div>
                 <CardTitle className="text-xl font-semibold">Flexible Timing</CardTitle>
@@ -144,7 +202,7 @@ const Index = () => {
             
             <Card className="text-center hover:shadow-lg transition-shadow duration-300 border-0 bg-white">
               <CardHeader>
-                <div className="w-16 h-16 bg-black rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 bg-gradient-to-r from-orange-400 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Users className="h-8 w-8 text-white" />
                 </div>
                 <CardTitle className="text-xl font-semibold">Student Community</CardTitle>
@@ -167,10 +225,20 @@ const Index = () => {
             Join thousands of students who trust Uniride for their campus travel needs.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" variant="secondary" className="bg-white text-black hover:bg-gray-100 px-8 py-3 text-lg font-medium" onClick={handleBookRideClick}>
+            <Button 
+              size="lg" 
+              variant="secondary" 
+              className="bg-white text-black hover:bg-gray-100 px-8 py-3 text-lg font-medium" 
+              onClick={handleBookRideClick}
+            >
               Book Your First Ride
             </Button>
-            <Button size="lg" variant="outline" onClick={() => navigate('/drive')} className="border-white hover:bg-white px-8 py-3 text-lg font-medium text-zinc-950">
+            <Button 
+              size="lg" 
+              variant="outline" 
+              onClick={() => navigate('/drive')} 
+              className="border-white hover:bg-white px-8 py-3 text-lg font-medium text-white hover:text-black"
+            >
               Start Driving
             </Button>
           </div>
@@ -183,6 +251,8 @@ const Index = () => {
           <p>© 2025 Uniride. All rights reserved.</p>
         </div>
       </footer>
-    </div>;
+    </div>
+  );
 };
+
 export default Index;

@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Building2, Users, TrendingUp, Shield, CheckCircle, Mail, Phone, Globe } from "lucide-react";
+import { Building2, Users, TrendingUp, Shield, CheckCircle, Mail, Phone, Globe, Handshake } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -72,6 +72,11 @@ const Partner = () => {
       {/* Hero Section */}
       <section className="bg-black text-white py-20">
         <div className="max-w-7xl mx-auto px-6 text-center">
+          <div className="flex justify-center mb-6">
+            <div className="bg-white rounded-full p-4">
+              <Handshake className="h-12 w-12 text-black" />
+            </div>
+          </div>
           <h1 className="text-4xl md:text-5xl font-bold mb-6">
             Partner with Uniride
           </h1>
@@ -86,7 +91,7 @@ const Partner = () => {
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Why Partner with Us?</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Why Partner with Uniride?</h2>
             <p className="text-xl text-gray-600">Unlock new opportunities for your transportation business</p>
           </div>
 
@@ -154,53 +159,8 @@ const Partner = () => {
         </div>
       </section>
 
-      {/* Partnership Process */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">How It Works</h2>
-            <p className="text-xl text-gray-600">Simple steps to become a Uniride partner</p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-black text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-6">
-                1
-              </div>
-              <h3 className="text-xl font-bold mb-4">Apply</h3>
-              <p className="text-gray-600">
-                Submit your partnership application with company details and 
-                required documentation.
-              </p>
-            </div>
-
-            <div className="text-center">
-              <div className="w-16 h-16 bg-black text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-6">
-                2
-              </div>
-              <h3 className="text-xl font-bold mb-4">Verification</h3>
-              <p className="text-gray-600">
-                Our team reviews your application and conducts necessary 
-                background checks and verifications.
-              </p>
-            </div>
-
-            <div className="text-center">
-              <div className="w-16 h-16 bg-black text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-6">
-                3
-              </div>
-              <h3 className="text-xl font-bold mb-4">Get Started</h3>
-              <p className="text-gray-600">
-                Once approved, you'll get access to our platform and can 
-                start receiving bookings immediately.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Application Form */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-20 bg-white">
         <div className="max-w-4xl mx-auto px-6">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Apply for Partnership</h2>
@@ -214,7 +174,8 @@ const Partner = () => {
                 <h3 className="text-2xl font-bold mb-4">Application Submitted!</h3>
                 <p className="text-gray-600 mb-6">
                   Thank you for your interest in partnering with Uniride. We'll review your 
-                  application and get back to you within 3-5 business days.
+                  application and get back to you within 3-5 business days at{" "}
+                  <span className="font-medium">partner@uniride.ng</span>
                 </p>
                 <Button 
                   onClick={() => setIsSubmitted(false)}
@@ -344,10 +305,37 @@ const Partner = () => {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-white py-12">
+      {/* Contact Information */}
+      <section className="py-12 bg-gray-50">
         <div className="max-w-7xl mx-auto px-6 text-center">
-          <p className="text-gray-500">© 2025 Uniride. All rights reserved.</p>
+          <h3 className="text-xl font-bold mb-4">Have Questions?</h3>
+          <p className="text-gray-600 mb-4">
+            Contact our partnership team for more information
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <a 
+              href="mailto:partner@uniride.ng" 
+              className="flex items-center gap-2 text-black hover:underline"
+            >
+              <Mail className="h-4 w-4" />
+              partner@uniride.ng
+            </a>
+            <span className="hidden sm:block text-gray-400">•</span>
+            <a 
+              href="tel:+2348123456789" 
+              className="flex items-center gap-2 text-black hover:underline"
+            >
+              <Phone className="h-4 w-4" />
+              +234 812 345 6789
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-black text-white py-12">
+        <div className="max-w-7xl mx-auto px-6 text-center">
+          <p>© 2025 Uniride. All rights reserved.</p>
         </div>
       </footer>
     </div>
