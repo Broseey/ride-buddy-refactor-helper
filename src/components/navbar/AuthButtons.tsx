@@ -21,9 +21,17 @@ const AuthButtons = ({ isMobile = false }: AuthButtonsProps) => {
     );
   }
 
-  // Show user menu if authenticated
-  if (user && userProfile) {
-    return <UserMenu currentUser={userProfile} />;
+  // Show user menu if authenticated - check for user OR userProfile
+  if (user) {
+    // Create a userProfile object if it doesn't exist but we have a user
+    const profileToUse = userProfile || {
+      id: user.id,
+      full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+      email: user.email,
+      avatar_url: user.user_metadata?.avatar_url || null
+    };
+    
+    return <UserMenu currentUser={profileToUse} />;
   }
 
   const buttonSize = isMobile ? "sm" : "sm";
