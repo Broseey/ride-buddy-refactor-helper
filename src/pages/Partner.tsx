@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Building2, Users, TrendingUp, Shield, CheckCircle, Mail, Phone, Globe, Car, Route, Award } from "lucide-react";
+import { Building2, Users, TrendingUp, Shield, CheckCircle, Mail, Phone, Globe } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -19,8 +19,6 @@ const partnerFormSchema = z.object({
   contact_phone: z.string().min(10, "Phone number must be at least 10 digits"),
   website_url: z.string().url("Invalid website URL").optional().or(z.literal("")),
   description: z.string().min(50, "Description must be at least 50 characters"),
-  vehicle_count: z.string().min(1, "Please specify number of vehicles"),
-  service_areas: z.string().min(10, "Please specify your service areas"),
 });
 
 type PartnerFormValues = z.infer<typeof partnerFormSchema>;
@@ -37,8 +35,6 @@ const Partner = () => {
       contact_phone: "",
       website_url: "",
       description: "",
-      vehicle_count: "",
-      service_areas: "",
     },
   });
 
@@ -53,8 +49,6 @@ const Partner = () => {
           contact_phone: values.contact_phone,
           website_url: values.website_url || null,
           description: values.description,
-          vehicle_count: parseInt(values.vehicle_count),
-          service_areas: values.service_areas,
           status: 'pending',
         });
 
@@ -78,17 +72,12 @@ const Partner = () => {
       {/* Hero Section */}
       <section className="bg-black text-white py-20">
         <div className="max-w-7xl mx-auto px-6 text-center">
-          <div className="flex justify-center mb-6">
-            <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center">
-              <Building2 className="h-10 w-10 text-black" />
-            </div>
-          </div>
           <h1 className="text-4xl md:text-5xl font-bold mb-6">
             Partner with Uniride
           </h1>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto">
             Join our network of trusted transportation companies and help us provide safe, 
-            reliable rides for students across Nigeria. Together, we can revolutionize campus transportation.
+            reliable rides for students across Nigeria.
           </p>
         </div>
       </section>
@@ -102,10 +91,10 @@ const Partner = () => {
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <Card className="text-center border-0 shadow-lg hover:shadow-xl transition-shadow">
+            <Card className="text-center">
               <CardHeader>
-                <div className="mx-auto mb-4 w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
-                  <Users className="h-8 w-8 text-blue-600" />
+                <div className="mx-auto mb-4 w-16 h-16 bg-black rounded-full flex items-center justify-center">
+                  <Users className="h-8 w-8 text-white" />
                 </div>
                 <CardTitle>Access to Students</CardTitle>
               </CardHeader>
@@ -117,10 +106,10 @@ const Partner = () => {
               </CardContent>
             </Card>
 
-            <Card className="text-center border-0 shadow-lg hover:shadow-xl transition-shadow">
+            <Card className="text-center">
               <CardHeader>
-                <div className="mx-auto mb-4 w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-                  <TrendingUp className="h-8 w-8 text-green-600" />
+                <div className="mx-auto mb-4 w-16 h-16 bg-black rounded-full flex items-center justify-center">
+                  <TrendingUp className="h-8 w-8 text-white" />
                 </div>
                 <CardTitle>Increase Revenue</CardTitle>
               </CardHeader>
@@ -132,10 +121,10 @@ const Partner = () => {
               </CardContent>
             </Card>
 
-            <Card className="text-center border-0 shadow-lg hover:shadow-xl transition-shadow">
+            <Card className="text-center">
               <CardHeader>
-                <div className="mx-auto mb-4 w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center">
-                  <Shield className="h-8 w-8 text-purple-600" />
+                <div className="mx-auto mb-4 w-16 h-16 bg-black rounded-full flex items-center justify-center">
+                  <Shield className="h-8 w-8 text-white" />
                 </div>
                 <CardTitle>Verified Network</CardTitle>
               </CardHeader>
@@ -147,10 +136,10 @@ const Partner = () => {
               </CardContent>
             </Card>
 
-            <Card className="text-center border-0 shadow-lg hover:shadow-xl transition-shadow">
+            <Card className="text-center">
               <CardHeader>
-                <div className="mx-auto mb-4 w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center">
-                  <Award className="h-8 w-8 text-yellow-600" />
+                <div className="mx-auto mb-4 w-16 h-16 bg-black rounded-full flex items-center justify-center">
+                  <Building2 className="h-8 w-8 text-white" />
                 </div>
                 <CardTitle>Brand Visibility</CardTitle>
               </CardHeader>
@@ -165,87 +154,15 @@ const Partner = () => {
         </div>
       </section>
 
-      {/* Partnership Benefits Details */}
+      {/* Partnership Process */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-3xl font-bold mb-6">What You Get as Our Partner</h2>
-              <div className="space-y-6">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Car className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold mb-2">Fleet Management Support</h3>
-                    <p className="text-gray-600">Advanced tools to manage your fleet, track performance, and optimize routes.</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Route className="h-6 w-6 text-green-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold mb-2">Route Optimization</h3>
-                    <p className="text-gray-600">Smart route planning to maximize efficiency and minimize empty trips.</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <TrendingUp className="h-6 w-6 text-purple-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold mb-2">Performance Analytics</h3>
-                    <p className="text-gray-600">Detailed insights into your business performance and growth opportunities.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-gray-50 p-8 rounded-xl">
-              <h3 className="text-2xl font-bold mb-6">Partnership Requirements</h3>
-              <ul className="space-y-3">
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5 text-green-600" />
-                  <span>Valid business registration</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5 text-green-600" />
-                  <span>Minimum 3 vehicles in fleet</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5 text-green-600" />
-                  <span>Valid insurance coverage</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5 text-green-600" />
-                  <span>Verified driver background checks</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5 text-green-600" />
-                  <span>Commitment to safety standards</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5 text-green-600" />
-                  <span>Service area coverage plan</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Partnership Process */}
-      <section className="py-20">
-        <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Partnership Process</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">How It Works</h2>
             <p className="text-xl text-gray-600">Simple steps to become a Uniride partner</p>
           </div>
 
-          <div className="grid md:grid-cols-4 gap-8">
+          <div className="grid md:grid-cols-3 gap-8">
             <div className="text-center">
               <div className="w-16 h-16 bg-black text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-6">
                 1
@@ -261,7 +178,7 @@ const Partner = () => {
               <div className="w-16 h-16 bg-black text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-6">
                 2
               </div>
-              <h3 className="text-xl font-bold mb-4">Review</h3>
+              <h3 className="text-xl font-bold mb-4">Verification</h3>
               <p className="text-gray-600">
                 Our team reviews your application and conducts necessary 
                 background checks and verifications.
@@ -272,21 +189,10 @@ const Partner = () => {
               <div className="w-16 h-16 bg-black text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-6">
                 3
               </div>
-              <h3 className="text-xl font-bold mb-4">Onboarding</h3>
+              <h3 className="text-xl font-bold mb-4">Get Started</h3>
               <p className="text-gray-600">
-                Complete the onboarding process including training, 
-                system setup, and integration testing.
-              </p>
-            </div>
-
-            <div className="text-center">
-              <div className="w-16 h-16 bg-black text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-6">
-                4
-              </div>
-              <h3 className="text-xl font-bold mb-4">Launch</h3>
-              <p className="text-gray-600">
-                Go live on our platform and start receiving bookings 
-                from students immediately.
+                Once approved, you'll get access to our platform and can 
+                start receiving bookings immediately.
               </p>
             </div>
           </div>
@@ -302,21 +208,14 @@ const Partner = () => {
           </div>
 
           {isSubmitted ? (
-            <Card className="text-center py-12 border-0 shadow-xl">
+            <Card className="text-center py-12">
               <CardContent>
-                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <CheckCircle className="h-10 w-10 text-green-600" />
-                </div>
-                <h3 className="text-2xl font-bold mb-4">Application Submitted Successfully!</h3>
-                <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+                <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-6" />
+                <h3 className="text-2xl font-bold mb-4">Application Submitted!</h3>
+                <p className="text-gray-600 mb-6">
                   Thank you for your interest in partnering with Uniride. We'll review your 
-                  application and get back to you within 3-5 business days with next steps.
+                  application and get back to you within 3-5 business days.
                 </p>
-                <div className="space-y-3 text-sm text-gray-500 mb-6">
-                  <p>📧 You'll receive a confirmation email shortly</p>
-                  <p>📞 Our team may contact you for additional information</p>
-                  <p>⏱️ Average review time: 3-5 business days</p>
-                </div>
                 <Button 
                   onClick={() => setIsSubmitted(false)}
                   className="bg-black text-white hover:bg-gray-800"
@@ -326,12 +225,9 @@ const Partner = () => {
               </CardContent>
             </Card>
           ) : (
-            <Card className="border-0 shadow-xl">
+            <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Building2 className="h-5 w-5" />
-                  Company Information
-                </CardTitle>
+                <CardTitle>Company Information</CardTitle>
               </CardHeader>
               <CardContent>
                 <Form {...form}>
@@ -344,7 +240,7 @@ const Partner = () => {
                           <FormItem>
                             <FormLabel className="flex items-center gap-2">
                               <Building2 className="h-4 w-4" />
-                              Company Name *
+                              Company Name
                             </FormLabel>
                             <FormControl>
                               <Input placeholder="Enter your company name" {...field} />
@@ -361,7 +257,7 @@ const Partner = () => {
                           <FormItem>
                             <FormLabel className="flex items-center gap-2">
                               <Mail className="h-4 w-4" />
-                              Contact Email *
+                              Contact Email
                             </FormLabel>
                             <FormControl>
                               <Input type="email" placeholder="contact@company.com" {...field} />
@@ -380,7 +276,7 @@ const Partner = () => {
                           <FormItem>
                             <FormLabel className="flex items-center gap-2">
                               <Phone className="h-4 w-4" />
-                              Contact Phone *
+                              Contact Phone
                             </FormLabel>
                             <FormControl>
                               <Input placeholder="+234 xxx xxx xxxx" {...field} />
@@ -408,51 +304,15 @@ const Partner = () => {
                       />
                     </div>
 
-                    <div className="grid md:grid-cols-2 gap-6">
-                      <FormField
-                        control={form.control}
-                        name="vehicle_count"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="flex items-center gap-2">
-                              <Car className="h-4 w-4" />
-                              Number of Vehicles *
-                            </FormLabel>
-                            <FormControl>
-                              <Input type="number" placeholder="e.g., 5" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="service_areas"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="flex items-center gap-2">
-                              <Route className="h-4 w-4" />
-                              Service Areas *
-                            </FormLabel>
-                            <FormControl>
-                              <Input placeholder="e.g., Lagos, Ibadan, Abeokuta" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
                     <FormField
                       control={form.control}
                       name="description"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Company Description *</FormLabel>
+                          <FormLabel>Company Description</FormLabel>
                           <FormControl>
                             <Textarea 
-                              placeholder="Tell us about your company, fleet size, service areas, experience in transportation, safety measures, and why you want to partner with Uniride..."
+                              placeholder="Tell us about your company, fleet size, service areas, and experience in transportation..."
                               className="min-h-[120px]"
                               {...field} 
                             />
@@ -464,7 +324,7 @@ const Partner = () => {
 
                     <Button 
                       type="submit" 
-                      className="w-full bg-black text-white hover:bg-gray-800 py-3"
+                      className="w-full bg-black text-white hover:bg-gray-800"
                       disabled={isSubmitting}
                     >
                       {isSubmitting ? (

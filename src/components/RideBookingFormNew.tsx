@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -31,7 +30,7 @@ import LocationSearchInput from "@/components/LocationSearchInput";
 import MapLocationPicker from "@/components/MapLocationPicker";
 import PaystackPayment from "@/components/PaystackPayment";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -62,14 +61,6 @@ const nigerianLocations = {
   ]
 };
 
-// Default vehicles if no data from Supabase
-const defaultVehicles = [
-  { id: 'sienna', name: 'Toyota Sienna', capacity: 6, base_price: 5000 },
-  { id: 'hiace', name: 'Toyota Hiace', capacity: 14, base_price: 7000 },
-  { id: 'long-bus', name: 'Long Bus', capacity: 18, base_price: 8000 },
-  { id: 'corolla', name: 'Toyota Corolla', capacity: 4, base_price: 3500 },
-];
-
 // Form schema using Zod for validation
 const bookingFormSchema = z.object({
   from: z.string().min(1, "Please select a departure location"),
@@ -92,17 +83,9 @@ const bookingFormSchema = z.object({
 
 type BookingFormValues = z.infer<typeof bookingFormSchema>;
 
-interface RideBookingFormNewProps {
-  preselectedRoute?: {
-    from: string;
-    to: string;
-  };
-}
-
-const RideBookingFormNew = ({ preselectedRoute }: RideBookingFormNewProps) => {
+const RideBookingFormNew = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   const [currentStep, setCurrentStep] = useState<BookingStep>('location');
   const [bookingType, setBookingType] = useState<BookingType>('join');
   const [showPreview, setShowPreview] = useState(false);
@@ -124,7 +107,7 @@ const RideBookingFormNew = ({ preselectedRoute }: RideBookingFormNewProps) => {
     },
   });
 
-  // Fetch available vehicles with fallback
+  // Fetch available vehicles
   const { data: vehicles } = useQuery({
     queryKey: ['vehicles'],
     queryFn: async () => {
@@ -133,11 +116,13 @@ const RideBookingFormNew = ({ preselectedRoute }: RideBookingFormNewProps) => {
         .select('*')
         .eq('is_active', true);
       
-      if (error) {
-        console.log('Error fetching vehicles, using defaults:', error);
-        return defaultVehicles;
-      }
-      return data && data.length > 0 ? data : defaultVehicles;
+      if (error) throw error;
+      return data || [
+        { id: 'sienna', name: 'Sienna', capacity: 6, base_price: 5000 },
+        { id: 'hiace', name: 'Hiace Bus', capacity: 14, base_price: 7000 },
+        { id: 'long-bus', name: 'Long Bus', capacity: 18, base_price: 8000 },
+        { id: 'corolla', name: 'Corolla', capacity: 4, base_price: 3500 },
+      ];
     },
   });
 
@@ -151,7 +136,7 @@ const RideBookingFormNew = ({ preselectedRoute }: RideBookingFormNewProps) => {
         .eq('is_active', true);
       
       if (error) throw error;
-      return data?.map(t => t.time) || ["08:00", "12:00", "14:00", "16:00", "18:00"];
+      return data?.map(t => t.time) || ["08:00", "12:00", "14:00"];
     },
   });
   
@@ -159,8 +144,8 @@ const RideBookingFormNew = ({ preselectedRoute }: RideBookingFormNewProps) => {
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingFormSchema),
     defaultValues: {
-      from: preselectedRoute?.from || "",
-      to: preselectedRoute?.to || "",
+      from: "",
+      to: "",
       fromType: "university",
       toType: "state",
       specificLocation: "",
@@ -177,29 +162,12 @@ const RideBookingFormNew = ({ preselectedRoute }: RideBookingFormNewProps) => {
   const watchVehicleId = form.watch("vehicleId");
   const watchMapLocation = form.watch("mapLocation");
   const watchPassengers = form.watch("passengers");
-
-  // Set preselected route on component mount
-  useEffect(() => {
-    if (preselectedRoute) {
-      form.setValue("from", preselectedRoute.from);
-      form.setValue("to", preselectedRoute.to);
-      // Auto-determine types based on route
-      if (preselectedRoute.from.includes("University")) {
-        form.setValue("fromType", "university");
-        form.setValue("toType", "state");
-      } else {
-        form.setValue("fromType", "state");
-        form.setValue("toType", "university");
-      }
-      setCurrentStep('date'); // Skip to date step since location is pre-filled
-    }
-  }, [preselectedRoute, form]);
   
   // Calculate price based on route and vehicle
   useEffect(() => {
-    if (watchFrom && watchTo && watchVehicleId && vehicles) {
+    if (watchFrom && watchTo && watchVehicleId && pricingData && vehicles) {
       const selectedVehicle = vehicles.find(v => v.id === watchVehicleId);
-      const routePrice = pricingData?.find(p => 
+      const routePrice = pricingData.find(p => 
         (p.from_location === watchFrom && p.to_location === watchTo) ||
         (p.from_location === watchTo && p.to_location === watchFrom)
       );
@@ -281,6 +249,7 @@ const RideBookingFormNew = ({ preselectedRoute }: RideBookingFormNewProps) => {
   const handlePaymentSuccess = async (reference: string) => {
     try {
       const formData = form.getValues();
+      const selectedVehicle = vehicles?.find(v => v.id === formData.vehicleId);
       
       // Create ride booking
       const { data: booking, error } = await supabase
@@ -651,6 +620,15 @@ const RideBookingFormNew = ({ preselectedRoute }: RideBookingFormNewProps) => {
                     </div>
                   )}
                   
+                  {(watchFrom && watchTo && !isLocationStepValid()) && (
+                    <div className="text-destructive text-sm mt-2">
+                      {bookingType === 'full' 
+                        ? "You must select a university for one location, a state for the other, and specify your exact location."
+                        : "You must select a university for one location and a state for the other."
+                      }
+                    </div>
+                  )}
+                  
                   <Button 
                     type="button"
                     onClick={nextStep} 
@@ -720,7 +698,7 @@ const RideBookingFormNew = ({ preselectedRoute }: RideBookingFormNewProps) => {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {(availableTimes || ["08:00", "12:00", "14:00", "16:00", "18:00"]).map((time) => (
+                            {(availableTimes || ["08:00", "12:00", "14:00"]).map((time) => (
                               <SelectItem key={time} value={time}>{time}</SelectItem>
                             ))}
                           </SelectContent>
@@ -803,7 +781,7 @@ const RideBookingFormNew = ({ preselectedRoute }: RideBookingFormNewProps) => {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {(vehicles || defaultVehicles).map(vehicle => (
+                            {(vehicles || []).map(vehicle => (
                               <SelectItem key={vehicle.id} value={vehicle.id}>
                                 {vehicle.name} - {vehicle.capacity} seats
                               </SelectItem>

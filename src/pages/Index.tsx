@@ -1,38 +1,27 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, Clock, Users, Shield, Star, ArrowRight, Car, Route, Zap } from "lucide-react";
+import { MapPin, Clock, Users, Shield, Star, ArrowRight } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import RideBookingFormNew from "@/components/RideBookingFormNew";
 import AvailableRides from "@/components/AvailableRides";
-import QuickRoutes from "@/components/dashboard/QuickRoutes";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-
 const Index = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
-
+  const {
+    user
+  } = useAuth();
   const handleBookRideClick = () => {
     if (!user) {
       toast.error("Please sign in to book a ride");
       navigate('/signin');
       return;
     }
+    // If user is authenticated, they can use the booking form directly
   };
-
-  // Popular routes for quick booking
-  const popularRoutes = [
-    { from: "Covenant University, Ota", to: "Lagos", price: "₦2,500" },
-    { from: "University of Ibadan", to: "Lagos", price: "₦3,000" },
-    { from: "Babcock University, Ilishan-Remo", to: "Lagos", price: "₦2,200" },
-    { from: "Redeemer's University, Ede", to: "Lagos", price: "₦3,500" }
-  ];
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
+  return <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
       <Navbar />
       
       {/* Hero Section */}
@@ -50,44 +39,13 @@ const Index = () => {
                 Connect with fellow students for safe, affordable rides between universities and cities across Nigeria.
               </p>
               
-              {/* Illustrations */}
-              <div className="flex items-center gap-8 my-8">
-                <div className="flex flex-col items-center text-center">
-                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-2">
-                    <Car className="h-8 w-8 text-blue-600" />
-                  </div>
-                  <span className="text-sm text-gray-600">Safe Rides</span>
-                </div>
-                <div className="flex flex-col items-center text-center">
-                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-2">
-                    <Route className="h-8 w-8 text-green-600" />
-                  </div>
-                  <span className="text-sm text-gray-600">Campus Routes</span>
-                </div>
-                <div className="flex flex-col items-center text-center">
-                  <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-2">
-                    <Zap className="h-8 w-8 text-purple-600" />
-                  </div>
-                  <span className="text-sm text-gray-600">Quick Booking</span>
-                </div>
-              </div>
-              
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button 
-                  size="lg" 
-                  className="bg-black text-white hover:bg-gray-800 px-8 py-3 text-lg font-medium transform hover:scale-105 transition-all duration-200" 
-                  onClick={handleBookRideClick}
-                >
+                <Button size="lg" className="bg-black text-white hover:bg-gray-800 px-8 py-3 text-lg font-medium transform hover:scale-105 transition-all duration-200" onClick={handleBookRideClick}>
                   Book a Ride
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
                 
-                <Button 
-                  variant="outline" 
-                  size="lg" 
-                  className="border-black text-black hover:bg-black hover:text-white px-8 py-3 text-lg font-medium transition-all duration-200" 
-                  onClick={() => navigate('/drive')}
-                >
+                <Button variant="outline" size="lg" className="border-black text-black hover:bg-black hover:text-white px-8 py-3 text-lg font-medium transition-all duration-200" onClick={() => navigate('/drive')}>
                   Become a Driver
                 </Button>
               </div>
@@ -115,19 +73,6 @@ const Index = () => {
             <RideBookingFormNew />
           </div>
         </div>
-
-        {/* Quick Routes for Signed-in Users */}
-        {user && (
-          <div className="mt-16">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome back, {user.email?.split('@')[0]}!</h2>
-              <p className="text-gray-600">Quick book your favorite routes</p>
-            </div>
-            <div className="max-w-2xl mx-auto">
-              <QuickRoutes routes={popularRoutes} />
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Available Rides Section */}
@@ -148,7 +93,7 @@ const Index = () => {
         </div>
       </section>
       
-      {/* Features Section with Illustrations */}
+      {/* Features Section */}
       <section className="py-20 bg-gray-50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
@@ -222,20 +167,10 @@ const Index = () => {
             Join thousands of students who trust Uniride for their campus travel needs.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              size="lg" 
-              variant="secondary" 
-              className="bg-white text-black hover:bg-gray-100 px-8 py-3 text-lg font-medium" 
-              onClick={handleBookRideClick}
-            >
+            <Button size="lg" variant="secondary" className="bg-white text-black hover:bg-gray-100 px-8 py-3 text-lg font-medium" onClick={handleBookRideClick}>
               Book Your First Ride
             </Button>
-            <Button 
-              size="lg" 
-              variant="outline" 
-              onClick={() => navigate('/drive')} 
-              className="border-white hover:bg-white px-8 py-3 text-lg font-medium text-zinc-950"
-            >
+            <Button size="lg" variant="outline" onClick={() => navigate('/drive')} className="border-white hover:bg-white px-8 py-3 text-lg font-medium text-zinc-950">
               Start Driving
             </Button>
           </div>
@@ -248,8 +183,6 @@ const Index = () => {
           <p>© 2025 Uniride. All rights reserved.</p>
         </div>
       </footer>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
