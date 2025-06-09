@@ -21,8 +21,8 @@ const QuickRoutes = ({ routes }: { routes: RouteProps[] }) => {
   const navigate = useNavigate();
 
   const handleRouteSelect = (route: RouteProps) => {
-    // Navigate to the schedule page with the route preselected
-    navigate('/schedule', { 
+    // Navigate to the main page with the route preselected
+    navigate('/', { 
       state: { 
         preselectedRoute: {
           from: route.from,
@@ -30,6 +30,14 @@ const QuickRoutes = ({ routes }: { routes: RouteProps[] }) => {
         }
       }
     });
+    
+    // Scroll to booking form
+    setTimeout(() => {
+      const bookingForm = document.querySelector('[data-booking-form]');
+      if (bookingForm) {
+        bookingForm.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 100);
   };
 
   return (
