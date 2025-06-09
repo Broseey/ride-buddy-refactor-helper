@@ -3,7 +3,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, Clock, Users, Shield, Star, ArrowRight, Sparkles, Target, Zap } from "lucide-react";
+import { MapPin, Clock, Users, Shield, Star, ArrowRight, Sparkles, Target, Zap, Search } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import RideBookingFormNew from "@/components/RideBookingFormNew";
 import AvailableRides from "@/components/AvailableRides";
