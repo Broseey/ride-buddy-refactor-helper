@@ -7,6 +7,7 @@ import { MapPin, Clock, Users, Shield, Star, ArrowRight, Sparkles, Target, Zap }
 import Navbar from "@/components/Navbar";
 import RideBookingFormNew from "@/components/RideBookingFormNew";
 import AvailableRides from "@/components/AvailableRides";
+import Footer from "@/components/Footer";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
@@ -38,31 +39,34 @@ const Index = () => {
                   <Sparkles className="h-4 w-4 text-white" />
                 </div>
                 <span className="text-sm font-medium text-gray-600">
-                  {user ? `Welcome back!` : `Nigeria's #1 Student Ride Platform`}
+                  Nigeria's #1 Student Ride Platform
                 </span>
               </div>
 
               <h1 className="text-4xl md:text-6xl font-bold text-gray-900 leading-tight">
-                {user ? (
-                  <>
-                    Ready for your
-                    <span className="block text-black">next journey?</span>
-                  </>
-                ) : (
-                  <>
-                    Campus Rides
-                    <span className="block text-black">Made Simple</span>
-                  </>
-                )}
+                Campus Rides
+                <span className="block text-black">Made Simple</span>
               </h1>
               
               <p className="text-xl text-gray-600 leading-relaxed">
-                {user ? (
-                  "Book your ride, join available trips, or explore new routes with fellow students across Nigeria."
-                ) : (
-                  "Connect with fellow students for safe, affordable rides between universities and cities across Nigeria."
-                )}
+                Connect with fellow students for safe, affordable rides between universities and cities across Nigeria.
               </p>
+              
+              {/* Hero Image - Uber Style */}
+              <div className="relative bg-gradient-to-r from-blue-50 to-purple-50 rounded-3xl p-8 overflow-hidden">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-2">
+                    <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
+                      <span className="text-white font-bold">🚗</span>
+                    </div>
+                    <div className="text-sm font-medium">Your ride is on the way</div>
+                    <div className="text-xs text-gray-500">2 mins away</div>
+                  </div>
+                  <div className="text-6xl opacity-20">🗺️</div>
+                </div>
+                <div className="absolute top-4 right-4 w-16 h-16 bg-yellow-200 rounded-full opacity-30"></div>
+                <div className="absolute bottom-4 left-4 w-8 h-8 bg-blue-200 rounded-full opacity-40"></div>
+              </div>
               
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button 
@@ -71,57 +75,18 @@ const Index = () => {
                   onClick={handleBookRideClick}
                 >
                   <Target className="mr-2 h-5 w-5" />
-                  {user ? "Book Another Ride" : "Book a Ride"}
+                  Book a Ride
                 </Button>
                 
-                {!user && (
-                  <Button 
-                    variant="outline" 
-                    size="lg" 
-                    className="border-black text-black hover:bg-black hover:text-white px-8 py-3 text-lg font-medium transition-all duration-200" 
-                    onClick={() => navigate('/drive')}
-                  >
-                    <Zap className="mr-2 h-5 w-5" />
-                    Become a Driver
-                  </Button>
-                )}
-
-                {user && (
-                  <Button 
-                    variant="outline" 
-                    size="lg" 
-                    className="border-black text-black hover:bg-black hover:text-white px-8 py-3 text-lg font-medium transition-all duration-200" 
-                    onClick={() => navigate('/available')}
-                  >
-                    <Search className="mr-2 h-5 w-5" />
-                    Browse Rides
-                  </Button>
-                )}
-              </div>
-            </div>
-            
-            {/* Illustration/Stats */}
-            <div className="grid grid-cols-3 gap-6 pt-8">
-              <div className="text-center">
-                <div className="bg-green-100 rounded-full p-4 w-16 h-16 mx-auto mb-3 flex items-center justify-center">
-                  <Users className="h-8 w-8 text-green-600" />
-                </div>
-                <div className="text-3xl font-bold text-black">10K+</div>
-                <div className="text-sm text-gray-600">Happy Students</div>
-              </div>
-              <div className="text-center">
-                <div className="bg-blue-100 rounded-full p-4 w-16 h-16 mx-auto mb-3 flex items-center justify-center">
-                  <MapPin className="h-8 w-8 text-blue-600" />
-                </div>
-                <div className="text-3xl font-bold text-black">50+</div>
-                <div className="text-sm text-gray-600">Universities</div>
-              </div>
-              <div className="text-center">
-                <div className="bg-purple-100 rounded-full p-4 w-16 h-16 mx-auto mb-3 flex items-center justify-center">
-                  <Shield className="h-8 w-8 text-purple-600" />
-                </div>
-                <div className="text-3xl font-bold text-black">99%</div>
-                <div className="text-sm text-gray-600">Safety Rate</div>
+                <Button 
+                  variant="outline" 
+                  size="lg" 
+                  className="border-black text-black hover:bg-black hover:text-white px-8 py-3 text-lg font-medium transition-all duration-200" 
+                  onClick={() => navigate('/drive')}
+                >
+                  <Zap className="mr-2 h-5 w-5" />
+                  Become a Driver
+                </Button>
               </div>
             </div>
           </div>
@@ -133,8 +98,37 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Available Rides Section */}
+      {/* Stats Section */}
       <section className="py-16 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-3 gap-6 max-w-4xl mx-auto">
+            <div className="text-center">
+              <div className="bg-green-100 rounded-full p-4 w-16 h-16 mx-auto mb-3 flex items-center justify-center">
+                <Users className="h-8 w-8 text-green-600" />
+              </div>
+              <div className="text-3xl font-bold text-black">10K+</div>
+              <div className="text-sm text-gray-600">Happy Students</div>
+            </div>
+            <div className="text-center">
+              <div className="bg-blue-100 rounded-full p-4 w-16 h-16 mx-auto mb-3 flex items-center justify-center">
+                <MapPin className="h-8 w-8 text-blue-600" />
+              </div>
+              <div className="text-3xl font-bold text-black">50+</div>
+              <div className="text-sm text-gray-600">Universities</div>
+            </div>
+            <div className="text-center">
+              <div className="bg-purple-100 rounded-full p-4 w-16 h-16 mx-auto mb-3 flex items-center justify-center">
+                <Shield className="h-8 w-8 text-purple-600" />
+              </div>
+              <div className="text-3xl font-bold text-black">99%</div>
+              <div className="text-sm text-gray-600">Safety Rate</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Available Rides Section */}
+      <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -152,7 +146,7 @@ const Index = () => {
       </section>
       
       {/* Features Section */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -245,12 +239,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-white py-6">
-        <div className="max-w-7xl mx-auto px-4 text-center text-gray-500">
-          <p>© 2025 Uniride. All rights reserved.</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

@@ -1,552 +1,559 @@
 
-import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Mail, Lock, User, UserPlus, Truck, Upload, Calendar, CreditCard } from "lucide-react";
-import DriverNavbar from "@/components/navbar/DriverNavbar";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useAuth } from "@/contexts/AuthContext";
+import { AlertCircle, Upload, User, Car, FileText, CreditCard } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useNavigate, Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-
-const formSchema = z.object({
-  fullName: z.string().min(2, "Full name must be at least 2 characters"),
-  email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-  confirmPassword: z.string(),
-  phoneNumber: z.string().min(10, "Please enter a valid phone number"),
-  licenseNumber: z.string().min(5, "Please enter a valid license number"),
-  licenseExpiryDate: z.string().min(1, "License expiry date is required"),
-  vehicleMake: z.string().min(1, "Vehicle make is required"),
-  vehicleModel: z.string().min(1, "Vehicle model is required"),
-  vehicleYear: z.number().min(2000, "Vehicle year must be 2000 or newer"),
-  vehiclePlate: z.string().min(1, "Vehicle plate number is required"),
-  vehicleType: z.string().min(1, "Please select vehicle type"),
-  vehicleCapacity: z.number().min(1, "Vehicle capacity is required"),
-  insuranceNumber: z.string().min(1, "Insurance number is required"),
-  insuranceExpiryDate: z.string().min(1, "Insurance expiry date is required"),
-  agreeToTerms: z.boolean().refine(val => val === true, "You must agree to the terms"),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
+import Navbar from "@/components/Navbar";
 
 const DriverSignUp = () => {
   const navigate = useNavigate();
-  const { driverSignUp, user, driverProfile } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
-
-  useEffect(() => {
-    if (user && driverProfile) {
-      navigate("/driver-dashboard", { replace: true });
-    }
-  }, [user, driverProfile, navigate]);
-
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      fullName: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
-      phoneNumber: "",
-      licenseNumber: "",
-      licenseExpiryDate: "",
-      vehicleMake: "",
-      vehicleModel: "",
-      vehicleYear: 2020,
-      vehiclePlate: "",
-      vehicleType: "",
-      vehicleCapacity: 4,
-      insuranceNumber: "",
-      insuranceExpiryDate: "",
-      agreeToTerms: false,
-    },
+  const [formData, setFormData] = useState({
+    fullName: "",
+    email: "",
+    password: "",
+    phoneNumber: "",
+    dateOfBirth: "",
+    address: "",
+    licenseNumber: "",
+    licenseExpiry: "",
+    vehicleMake: "",
+    vehicleModel: "",
+    vehicleYear: "",
+    vehiclePlateNumber: "",
+    vehicleColor: "",
+    vehicleType: "",
+    emergencyContactName: "",
+    emergencyContactPhone: "",
+    bankName: "",
+    accountNumber: "",
+    accountName: "",
+    hasInsurance: false,
+    hasValidLicense: false,
+    agreeToTerms: false,
   });
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    setIsLoading(true);
+  const handleInputChange = (field: string, value: string | boolean) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const nextStep = () => {
+    if (validateCurrentStep()) {
+      setCurrentStep(prev => prev + 1);
+    }
+  };
+
+  const prevStep = () => {
+    setCurrentStep(prev => prev - 1);
+  };
+
+  const validateCurrentStep = () => {
+    switch (currentStep) {
+      case 1:
+        return formData.fullName && formData.email && formData.password && formData.phoneNumber;
+      case 2:
+        return formData.licenseNumber && formData.licenseExpiry && formData.hasValidLicense;
+      case 3:
+        return formData.vehicleMake && formData.vehicleModel && formData.vehiclePlateNumber;
+      case 4:
+        return formData.emergencyContactName && formData.emergencyContactPhone && formData.agreeToTerms;
+      default:
+        return true;
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     
+    if (!validateCurrentStep()) {
+      toast.error("Please fill all required fields");
+      return;
+    }
+
+    setIsLoading(true);
+
     try {
-      const { error } = await driverSignUp(values.email, values.password, values.fullName);
-      
-      if (error) {
-        toast.error(error.message || "Failed to create driver account");
-      } else {
-        toast.success("Driver application submitted! You'll receive an email confirmation within 1 week.");
-        // Show verification pending message
-        setCurrentStep(4);
+      // Sign up the user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            full_name: formData.fullName,
+            is_driver: true
+          }
+        }
+      });
+
+      if (authError) throw authError;
+
+      if (authData.user) {
+        // Create driver profile
+        const { error: profileError } = await supabase
+          .from('driver_profiles')
+          .insert({
+            id: authData.user.id,
+            full_name: formData.fullName,
+            email: formData.email,
+            phone_number: formData.phoneNumber,
+            date_of_birth: formData.dateOfBirth,
+            address: formData.address,
+            license_number: formData.licenseNumber,
+            license_expiry: formData.licenseExpiry,
+            vehicle_make: formData.vehicleMake,
+            vehicle_model: formData.vehicleModel,
+            vehicle_year: formData.vehicleYear ? parseInt(formData.vehicleYear) : null,
+            vehicle_plate_number: formData.vehiclePlateNumber,
+            vehicle_color: formData.vehicleColor,
+            vehicle_type: formData.vehicleType,
+            emergency_contact_name: formData.emergencyContactName,
+            emergency_contact_phone: formData.emergencyContactPhone,
+            bank_name: formData.bankName,
+            account_number: formData.accountNumber,
+            account_name: formData.accountName,
+            verification_status: 'pending'
+          });
+
+        if (profileError) throw profileError;
+
+        toast.success("Registration successful! Please wait for verification.");
+        
+        // Show success message and redirect
+        setCurrentStep(5);
       }
-    } catch (error) {
-      toast.error("An unexpected error occurred");
+    } catch (error: any) {
+      console.error('Error during signup:', error);
+      toast.error(error.message || "An error occurred during registration");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, 3));
-  const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1));
-
-  if (currentStep === 4) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
-        <DriverNavbar />
-        <div className="flex-1 flex items-center justify-center px-4 py-12">
-          <Card className="w-full max-w-md bg-white border-0 shadow-lg">
-            <CardHeader className="text-center">
-              <div className="flex items-center justify-center mb-4">
-                <div className="bg-yellow-500 rounded-full p-3">
-                  <Truck className="h-6 w-6 text-white" />
-                </div>
+  const renderStep = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 mb-4">
+              <User className="h-5 w-5" />
+              <h3 className="text-lg font-semibold">Personal Information</h3>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="fullName">Full Name *</Label>
+                <Input
+                  id="fullName"
+                  value={formData.fullName}
+                  onChange={(e) => handleInputChange("fullName", e.target.value)}
+                  placeholder="Enter your full name"
+                  required
+                />
               </div>
-              <CardTitle className="text-2xl font-bold">Application Under Review</CardTitle>
-              <CardDescription>
-                Your driver application has been submitted successfully
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <h3 className="font-semibold text-yellow-800 mb-2">What's Next?</h3>
-                <ul className="text-sm text-yellow-700 space-y-1">
-                  <li>• Our admin team will review your application</li>
-                  <li>• Verification typically takes up to 1 week</li>
-                  <li>• You'll receive an email notification once approved</li>
-                  <li>• All submitted documents will be verified</li>
-                </ul>
+              
+              <div>
+                <Label htmlFor="email">Email *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => handleInputChange("email", e.target.value)}
+                  placeholder="Enter your email"
+                  required
+                />
               </div>
-              <div className="text-center">
-                <Link to="/driver-signin">
-                  <Button className="bg-black text-white hover:bg-gray-800">
-                    Sign In to Check Status
-                  </Button>
-                </Link>
+              
+              <div>
+                <Label htmlFor="password">Password *</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={formData.password}
+                  onChange={(e) => handleInputChange("password", e.target.value)}
+                  placeholder="Create a password"
+                  required
+                />
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <DriverNavbar />
-      
-      <div className="flex-1 flex items-center justify-center px-4 py-12">
-        <Card className="w-full max-w-2xl bg-white border-0 shadow-lg">
-          <CardHeader className="space-y-1">
-            <div className="flex items-center justify-center mb-4">
-              <div className="bg-black rounded-full p-3">
-                <Truck className="h-6 w-6 text-white" />
+              
+              <div>
+                <Label htmlFor="phoneNumber">Phone Number *</Label>
+                <Input
+                  id="phoneNumber"
+                  value={formData.phoneNumber}
+                  onChange={(e) => handleInputChange("phoneNumber", e.target.value)}
+                  placeholder="Enter your phone number"
+                  required
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                <Input
+                  id="dateOfBirth"
+                  type="date"
+                  value={formData.dateOfBirth}
+                  onChange={(e) => handleInputChange("dateOfBirth", e.target.value)}
+                />
               </div>
             </div>
-            <CardTitle className="text-2xl font-bold tracking-tight text-center">
-              Driver Application - Step {currentStep} of 3
-            </CardTitle>
-            <CardDescription className="text-center">
-              Complete all steps to become a Uniride driver
-            </CardDescription>
-          </CardHeader>
-          
-          <CardContent className="space-y-6">
-            <div className="flex justify-between mb-6">
-              {[1, 2, 3].map((step) => (
-                <div key={step} className={`flex items-center ${step < 3 ? 'flex-1' : ''}`}>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                    currentStep >= step ? 'bg-black text-white' : 'bg-gray-200 text-gray-600'
-                  }`}>
-                    {step}
-                  </div>
-                  {step < 3 && (
-                    <div className={`flex-1 h-0.5 mx-2 ${
-                      currentStep > step ? 'bg-black' : 'bg-gray-200'
-                    }`} />
-                  )}
-                </div>
-              ))}
+            
+            <div>
+              <Label htmlFor="address">Address</Label>
+              <Textarea
+                id="address"
+                value={formData.address}
+                onChange={(e) => handleInputChange("address", e.target.value)}
+                placeholder="Enter your address"
+              />
             </div>
+          </div>
+        );
 
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                {currentStep === 1 && (
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Personal Information</h3>
-                    
-                    <FormField
-                      control={form.control}
-                      name="fullName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Full Name</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-                              <Input className="pl-10" placeholder="John Doe" {...field} />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+      case 2:
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 mb-4">
+              <FileText className="h-5 w-5" />
+              <h3 className="text-lg font-semibold">License Information</h3>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="licenseNumber">License Number *</Label>
+                <Input
+                  id="licenseNumber"
+                  value={formData.licenseNumber}
+                  onChange={(e) => handleInputChange("licenseNumber", e.target.value)}
+                  placeholder="Enter license number"
+                  required
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="licenseExpiry">License Expiry Date *</Label>
+                <Input
+                  id="licenseExpiry"
+                  type="date"
+                  value={formData.licenseExpiry}
+                  onChange={(e) => handleInputChange("licenseExpiry", e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="hasValidLicense"
+                  checked={formData.hasValidLicense}
+                  onCheckedChange={(checked) => handleInputChange("hasValidLicense", checked)}
+                />
+                <Label htmlFor="hasValidLicense" className="text-sm">
+                  I confirm that I have a valid driver's license *
+                </Label>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="hasInsurance"
+                  checked={formData.hasInsurance}
+                  onCheckedChange={(checked) => handleInputChange("hasInsurance", checked)}
+                />
+                <Label htmlFor="hasInsurance" className="text-sm">
+                  I have valid vehicle insurance
+                </Label>
+              </div>
+            </div>
+            
+            <Alert>
+              <Upload className="h-4 w-4" />
+              <AlertDescription>
+                You'll need to upload your license documents after registration for verification.
+              </AlertDescription>
+            </Alert>
+          </div>
+        );
 
-                    <FormField
-                      control={form.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email Address</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-                              <Input className="pl-10" placeholder="driver@example.com" type="email" {...field} />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+      case 3:
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 mb-4">
+              <Car className="h-5 w-5" />
+              <h3 className="text-lg font-semibold">Vehicle Information</h3>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="vehicleMake">Vehicle Make *</Label>
+                <Input
+                  id="vehicleMake"
+                  value={formData.vehicleMake}
+                  onChange={(e) => handleInputChange("vehicleMake", e.target.value)}
+                  placeholder="e.g. Toyota"
+                  required
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="vehicleModel">Vehicle Model *</Label>
+                <Input
+                  id="vehicleModel"
+                  value={formData.vehicleModel}
+                  onChange={(e) => handleInputChange("vehicleModel", e.target.value)}
+                  placeholder="e.g. Corolla"
+                  required
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="vehicleYear">Year</Label>
+                <Input
+                  id="vehicleYear"
+                  value={formData.vehicleYear}
+                  onChange={(e) => handleInputChange("vehicleYear", e.target.value)}
+                  placeholder="2020"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="vehiclePlateNumber">Plate Number *</Label>
+                <Input
+                  id="vehiclePlateNumber"
+                  value={formData.vehiclePlateNumber}
+                  onChange={(e) => handleInputChange("vehiclePlateNumber", e.target.value)}
+                  placeholder="ABC-123-XYZ"
+                  required
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="vehicleColor">Color</Label>
+                <Input
+                  id="vehicleColor"
+                  value={formData.vehicleColor}
+                  onChange={(e) => handleInputChange("vehicleColor", e.target.value)}
+                  placeholder="Silver"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="vehicleType">Vehicle Type</Label>
+                <Input
+                  id="vehicleType"
+                  value={formData.vehicleType}
+                  onChange={(e) => handleInputChange("vehicleType", e.target.value)}
+                  placeholder="Sedan, SUV, Bus, etc."
+                />
+              </div>
+            </div>
+          </div>
+        );
 
-                    <FormField
-                      control={form.control}
-                      name="phoneNumber"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Phone Number</FormLabel>
-                          <FormControl>
-                            <Input placeholder="+234 800 000 0000" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="password"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Password</FormLabel>
-                            <FormControl>
-                              <div className="relative">
-                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-                                <Input className="pl-10" placeholder="••••••••" type="password" {...field} />
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="confirmPassword"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Confirm Password</FormLabel>
-                            <FormControl>
-                              <div className="relative">
-                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-                                <Input className="pl-10" placeholder="••••••••" type="password" {...field} />
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {currentStep === 2 && (
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">License & Insurance Information</h3>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="licenseNumber"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Driver's License Number</FormLabel>
-                            <FormControl>
-                              <Input placeholder="ABC123456789" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="licenseExpiryDate"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>License Expiry Date</FormLabel>
-                            <FormControl>
-                              <div className="relative">
-                                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-                                <Input className="pl-10" type="date" {...field} />
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="insuranceNumber"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Insurance Policy Number</FormLabel>
-                            <FormControl>
-                              <div className="relative">
-                                <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-                                <Input className="pl-10" placeholder="INS123456789" {...field} />
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="insuranceExpiryDate"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Insurance Expiry Date</FormLabel>
-                            <FormControl>
-                              <div className="relative">
-                                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-                                <Input className="pl-10" type="date" {...field} />
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <p className="text-sm text-blue-700">
-                        <Upload className="inline h-4 w-4 mr-1" />
-                        You'll be able to upload license and insurance documents after account creation.
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {currentStep === 3 && (
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Vehicle Information</h3>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="vehicleMake"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Vehicle Make</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Toyota" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="vehicleModel"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Vehicle Model</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Corolla" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="vehicleYear"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Year</FormLabel>
-                            <FormControl>
-                              <Input 
-                                type="number" 
-                                placeholder="2020"
-                                {...field}
-                                onChange={(e) => field.onChange(parseInt(e.target.value))}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="vehiclePlate"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Plate Number</FormLabel>
-                            <FormControl>
-                              <Input placeholder="ABC-123-DE" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="vehicleCapacity"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Capacity</FormLabel>
-                            <FormControl>
-                              <Input 
-                                type="number" 
-                                placeholder="4"
-                                {...field}
-                                onChange={(e) => field.onChange(parseInt(e.target.value))}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <FormField
-                      control={form.control}
-                      name="vehicleType"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Vehicle Type</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select vehicle type" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="sedan">Sedan</SelectItem>
-                              <SelectItem value="suv">SUV</SelectItem>
-                              <SelectItem value="bus">Bus</SelectItem>
-                              <SelectItem value="minibus">Mini Bus</SelectItem>
-                              <SelectItem value="luxury">Luxury</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="agreeToTerms"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                          <div className="space-y-1 leading-none">
-                            <FormLabel className="text-sm">
-                              I agree to the{" "}
-                              <Link to="/terms" className="text-black hover:underline">
-                                terms and conditions
-                              </Link>{" "}
-                              and driver requirements
-                            </FormLabel>
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                )}
-
-                <div className="flex justify-between pt-4">
-                  {currentStep > 1 && (
-                    <Button type="button" variant="outline" onClick={prevStep}>
-                      Previous
-                    </Button>
-                  )}
-                  
-                  <div className="ml-auto">
-                    {currentStep < 3 ? (
-                      <Button type="button" onClick={nextStep} className="bg-black text-white hover:bg-gray-800">
-                        Next
-                      </Button>
-                    ) : (
-                      <Button
-                        type="submit"
-                        className="bg-black text-white hover:bg-gray-800"
-                        disabled={isLoading}
-                      >
-                        {isLoading ? (
-                          <span className="flex items-center">
-                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                            </svg>
-                            Submitting...
-                          </span>
-                        ) : (
-                          <span className="flex items-center">
-                            <UserPlus className="mr-2 h-4 w-4" />
-                            Submit Application
-                          </span>
-                        )}
-                      </Button>
-                    )}
-                  </div>
+      case 4:
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 mb-4">
+              <CreditCard className="h-5 w-5" />
+              <h3 className="text-lg font-semibold">Emergency Contact & Banking</h3>
+            </div>
+            
+            <div className="space-y-4">
+              <h4 className="font-medium">Emergency Contact</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="emergencyContactName">Contact Name *</Label>
+                  <Input
+                    id="emergencyContactName"
+                    value={formData.emergencyContactName}
+                    onChange={(e) => handleInputChange("emergencyContactName", e.target.value)}
+                    placeholder="Emergency contact name"
+                    required
+                  />
                 </div>
                 
-                <div className="text-center mt-4">
-                  <p className="text-sm text-gray-600">
-                    Already have a driver account?{" "}
-                    <Link to="/driver-signin" className="font-medium text-black hover:underline">
-                      Sign in
-                    </Link>
-                  </p>
+                <div>
+                  <Label htmlFor="emergencyContactPhone">Contact Phone *</Label>
+                  <Input
+                    id="emergencyContactPhone"
+                    value={formData.emergencyContactPhone}
+                    onChange={(e) => handleInputChange("emergencyContactPhone", e.target.value)}
+                    placeholder="Emergency contact phone"
+                    required
+                  />
                 </div>
-              </form>
-            </Form>
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              <h4 className="font-medium">Banking Information (Optional)</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="bankName">Bank Name</Label>
+                  <Input
+                    id="bankName"
+                    value={formData.bankName}
+                    onChange={(e) => handleInputChange("bankName", e.target.value)}
+                    placeholder="Bank name"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="accountNumber">Account Number</Label>
+                  <Input
+                    id="accountNumber"
+                    value={formData.accountNumber}
+                    onChange={(e) => handleInputChange("accountNumber", e.target.value)}
+                    placeholder="Account number"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="accountName">Account Name</Label>
+                  <Input
+                    id="accountName"
+                    value={formData.accountName}
+                    onChange={(e) => handleInputChange("accountName", e.target.value)}
+                    placeholder="Account holder name"
+                  />
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="agreeToTerms"
+                checked={formData.agreeToTerms}
+                onCheckedChange={(checked) => handleInputChange("agreeToTerms", checked)}
+              />
+              <Label htmlFor="agreeToTerms" className="text-sm">
+                I agree to the <Link to="/terms" className="text-blue-600 underline">Terms and Conditions</Link> *
+              </Label>
+            </div>
+          </div>
+        );
+
+      case 5:
+        return (
+          <div className="text-center space-y-6">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+              <AlertCircle className="h-8 w-8 text-green-600" />
+            </div>
+            <h3 className="text-xl font-semibold">Registration Submitted!</h3>
+            <p className="text-gray-600">
+              Thank you for registering as a driver with Uniride. Your application has been submitted and is now under review.
+            </p>
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <h4 className="font-medium mb-2">What happens next?</h4>
+              <ul className="text-sm text-gray-600 space-y-1">
+                <li>• Our team will review your application within 3-5 business days</li>
+                <li>• You'll receive an email notification about your verification status</li>
+                <li>• Once approved, you can start accepting ride requests</li>
+                <li>• We may contact you for additional documentation if needed</li>
+              </ul>
+            </div>
+            <Button onClick={() => navigate('/driver-signin')} className="w-full">
+              Go to Driver Login
+            </Button>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      
+      <div className="container mx-auto px-4 py-8">
+        <Card className="max-w-4xl mx-auto">
+          <CardHeader>
+            <CardTitle className="text-2xl text-center">Join Uniride as a Driver</CardTitle>
+            <CardDescription className="text-center">
+              Complete the registration process to start driving with us
+            </CardDescription>
+            
+            {currentStep < 5 && (
+              <div className="flex justify-center mt-6">
+                <div className="flex items-center space-x-2">
+                  {[1, 2, 3, 4].map((step) => (
+                    <div key={step} className="flex items-center">
+                      <div
+                        className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                          currentStep >= step ? 'bg-black text-white' : 'bg-gray-200'
+                        }`}
+                      >
+                        {step}
+                      </div>
+                      {step < 4 && (
+                        <div
+                          className={`w-8 h-1 ${
+                            currentStep > step ? 'bg-black' : 'bg-gray-200'
+                          }`}
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardHeader>
+          
+          <CardContent>
+            <form onSubmit={handleSubmit}>
+              {renderStep()}
+              
+              {currentStep < 5 && (
+                <div className="flex justify-between mt-8">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={prevStep}
+                    disabled={currentStep === 1}
+                  >
+                    Previous
+                  </Button>
+                  
+                  {currentStep < 4 ? (
+                    <Button
+                      type="button"
+                      onClick={nextStep}
+                      disabled={!validateCurrentStep()}
+                    >
+                      Next
+                    </Button>
+                  ) : (
+                    <Button
+                      type="submit"
+                      disabled={!validateCurrentStep() || isLoading}
+                    >
+                      {isLoading ? "Submitting..." : "Submit Application"}
+                    </Button>
+                  )}
+                </div>
+              )}
+            </form>
+            
+            {currentStep < 5 && (
+              <div className="mt-8 text-center">
+                <p className="text-sm text-gray-600">
+                  Already have an account?{" "}
+                  <Link to="/driver-signin" className="text-blue-600 hover:underline">
+                    Sign in here
+                  </Link>
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

@@ -68,12 +68,19 @@ const PaystackPayment: React.FC<PaystackPaymentProps> = ({
       },
       callback: function(response: any) {
         setIsProcessing(false);
-        toast.success("Payment successful!");
-        console.log("Payment successful:", response);
-        onSuccess(response.reference);
+        console.log("Payment response:", response);
+        
+        if (response.status === 'success') {
+          toast.success("Payment successful! Creating your booking...");
+          onSuccess(response.reference);
+        } else {
+          toast.error("Payment failed. Please try again.");
+          onCancel();
+        }
       },
       onClose: function() {
         setIsProcessing(false);
+        console.log("Payment modal closed");
         toast.info("Payment cancelled");
         onCancel();
       }

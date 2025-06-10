@@ -20,6 +20,7 @@ import DriverHelp from "./pages/DriverHelp";
 import DriverRequirements from "./pages/DriverRequirements";
 import AdminSignIn from "./pages/AdminSignIn";
 import AdminDashboard from "./pages/AdminDashboard";
+import Admin from "./pages/Admin";
 import BookingConfirmation from "./pages/BookingConfirmation";
 import About from "./pages/About";
 import HowItWorks from "./pages/HowItWorks";
@@ -65,6 +66,7 @@ function App() {
               
               {/* Admin routes */}
               <Route path="/admin-signin" element={<AdminSignIn />} />
+              <Route path="/admin" element={<Admin />} />
               
               {/* Protected user routes */}
               <Route path="/dashboard" element={

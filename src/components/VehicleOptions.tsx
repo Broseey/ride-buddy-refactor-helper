@@ -15,50 +15,60 @@ interface Vehicle {
 interface VehicleOptionsProps {
   selectedVehicle: string;
   onSelect: (id: string) => void;
+  bookingType?: 'join' | 'full';
 }
 
 const vehicles: Vehicle[] = [
   {
-    id: "sienna",
-    name: "Toyota Sienna",
-    image: "🚐",
-    capacity: 6,
-    price: 5000,
-    features: ["Air Conditioning", "Comfortable Seating", "Luggage Space"]
-  },
-  {
-    id: "hiace",
-    name: "Hiace Bus",
-    image: "🚌",
-    capacity: 14,
-    price: 7000,
-    features: ["Spacious Interior", "Air Conditioning", "Large Luggage Space"]
-  },
-  {
-    id: "long-bus",
-    name: "Long Bus",
-    image: "🚍",
-    capacity: 18,
-    price: 8000,
-    features: ["Maximum Capacity", "Economic Option", "Group Friendly"]
-  },
-  {
     id: "corolla",
-    name: "Toyota Corolla",
+    name: "Sedan",
     image: "🚗",
     capacity: 4,
     price: 3500,
-    features: ["Comfort", "Speed", "Fuel Efficiency"]
+    features: ["Comfort", "Speed", "Fuel Efficient"]
+  },
+  {
+    id: "sienna",
+    name: "Mini Van",
+    image: "🚐",
+    capacity: 6,
+    price: 5000,
+    features: ["Air Conditioning", "Comfortable", "Luggage Space"]
+  },
+  {
+    id: "hiace",
+    name: "Mini Bus",
+    image: "🚌",
+    capacity: 14,
+    price: 7000,
+    features: ["Spacious", "Air Conditioning", "Large Luggage"]
+  },
+  {
+    id: "long-bus",
+    name: "Bus",
+    image: "🚍",
+    capacity: 18,
+    price: 8000,
+    features: ["Maximum Capacity", "Economic", "Group Friendly"]
   }
 ];
 
-const VehicleOptions = ({ selectedVehicle, onSelect }: VehicleOptionsProps) => {
+const VehicleOptions = ({ selectedVehicle, onSelect, bookingType = 'join' }: VehicleOptionsProps) => {
+  const calculatePrice = (vehicle: Vehicle) => {
+    if (bookingType === 'full') {
+      // 10% discount for full ride booking
+      return Math.round(vehicle.price * 0.9);
+    }
+    // Per seat pricing for join rides
+    return Math.round(vehicle.price / vehicle.capacity);
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-4xl">
       {vehicles.map((vehicle) => (
         <Card 
           key={vehicle.id}
-          className={`p-4 cursor-pointer transition-all rounded-[3.5rem] md:rounded-[5.5rem] ${
+          className={`p-4 cursor-pointer transition-all rounded-[1.5rem] ${
             selectedVehicle === vehicle.id 
               ? "border-purple-600 bg-purple-50"
               : "hover:border-gray-300"
@@ -89,7 +99,9 @@ const VehicleOptions = ({ selectedVehicle, onSelect }: VehicleOptionsProps) => {
                 </ul>
               </div>
               <div className="mt-3 font-semibold text-purple-700">
-                ₦{vehicle.price.toLocaleString()}
+                ₦{calculatePrice(vehicle).toLocaleString()}
+                {bookingType === 'join' && <span className="text-xs text-gray-500"> /seat</span>}
+                {bookingType === 'full' && <span className="text-xs text-green-600"> (10% off)</span>}
               </div>
             </div>
           </div>
