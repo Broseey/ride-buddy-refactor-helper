@@ -1,88 +1,101 @@
 
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CreditCard, Shield, CheckCircle } from "lucide-react";
-import { toast } from "sonner";
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 
 interface PaystackPaymentProps {
   amount: number;
   email: string;
-  onSuccess: (reference: string) => void;
-  onCancel: () => void;
-  rideDetails: {
-    from: string;
-    to: string;
-    date: string;
-    time: string;
-    passengers: number;
-  };
+  onSuccess: () => void;
+  onClose: () => void;
+  bookingData: any;
 }
 
 const PaystackPayment: React.FC<PaystackPaymentProps> = ({
   amount,
   email,
   onSuccess,
-  onCancel,
-  rideDetails
+  onClose,
+  bookingData
 }) => {
-  const [isProcessing, setIsProcessing] = useState(false);
+  const navigate = useNavigate();
 
-  const initializePaystack = () => {
-    setIsProcessing(true);
-    
-    // Use the existing Paystack public key
-    const paystackPublicKey = "pk_test_fd701d387879bd23739ac1bc209e7ba24ea63a8f";
-    
-    // Check if Paystack script is loaded
-    if (typeof window.PaystackPop === 'undefined') {
-      toast.error("Payment system not loaded. Please refresh and try again.");
-      setIsProcessing(false);
+  const handlePayment = () => {
+    if (!window.PaystackPop) {
+      toast.error('Payment system not loaded. Please refresh and try again.');
       return;
     }
 
     const handler = window.PaystackPop.setup({
-      key: paystackPublicKey,
+      key: 'pk_test_b8a1ce65c6c8717c676c5d5fbdba9ab1d4a9c3d0',
       email: email,
-      amount: amount * 100, // Paystack expects amount in kobo
+      amount: amount * 100, // Convert to kobo
       currency: 'NGN',
       ref: `uniride_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       metadata: {
-        custom_fields: [
-          {
-            display_name: "Ride Route",
-            variable_name: "ride_route",
-            value: `${rideDetails.from} to ${rideDetails.to}`
-          },
-          {
-            display_name: "Travel Date",
-            variable_name: "travel_date",
-            value: `${rideDetails.date} at ${rideDetails.time}`
-          },
-          {
-            display_name: "Passengers",
-            variable_name: "passengers",
-            value: rideDetails.passengers.toString()
-          }
-        ]
+        booking_data: JSON.stringify(bookingData),
+        user_email: email
       },
-      callback: function(response: any) {
-        setIsProcessing(false);
-        console.log("Payment response:", response);
+      callback: async (response: any) => {
+        console.log('Payment successful:', response);
         
-        if (response.status === 'success') {
-          toast.success("Payment successful! Creating your booking...");
-          onSuccess(response.reference);
-        } else {
-          toast.error("Payment failed. Please try again.");
-          onCancel();
+        try {
+          // Get current user
+          const { data: { user }, error: userError } = await supabase.auth.getUser();
+          
+          if (userError || !user) {
+            toast.error('Authentication error. Please sign in again.');
+            return;
+          }
+
+          // Create the ride record
+          const rideData = {
+            user_id: user.id,
+            from_location: bookingData.from,
+            to_location: bookingData.to,
+            departure_date: bookingData.date,
+            departure_time: bookingData.time,
+            vehicle_type: bookingData.vehicle,
+            booking_type: bookingData.bookingType,
+            passenger_count: bookingData.passengers || 1,
+            amount: amount,
+            payment_reference: response.reference,
+            status: 'confirmed'
+          };
+
+          console.log('Creating ride with data:', rideData);
+
+          const { data: ride, error: rideError } = await supabase
+            .from('rides')
+            .insert(rideData)
+            .select()
+            .single();
+
+          if (rideError) {
+            console.error('Error creating ride:', rideError);
+            toast.error('Failed to complete booking. Please contact support.');
+            return;
+          }
+
+          console.log('Ride created successfully:', ride);
+          toast.success('Booking confirmed! Payment successful.');
+          onSuccess();
+          
+          // Navigate to dashboard after successful booking
+          setTimeout(() => {
+            navigate('/dashboard');
+          }, 2000);
+
+        } catch (error) {
+          console.error('Error processing payment:', error);
+          toast.error('Failed to complete booking. Please contact support.');
         }
       },
-      onClose: function() {
-        setIsProcessing(false);
-        console.log("Payment modal closed");
-        toast.info("Payment cancelled");
-        onCancel();
+      onClose: () => {
+        console.log('Payment cancelled');
+        onClose();
       }
     });
 
@@ -90,86 +103,31 @@ const PaystackPayment: React.FC<PaystackPaymentProps> = ({
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader className="text-center">
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-          <CreditCard className="h-6 w-6 text-green-600" />
+    <div className="space-y-4">
+      <div className="bg-gray-50 p-4 rounded-lg">
+        <h3 className="font-medium mb-2">Payment Summary</h3>
+        <div className="flex justify-between text-sm">
+          <span>Amount:</span>
+          <span className="font-medium">₦{amount.toLocaleString()}</span>
         </div>
-        <CardTitle>Complete Your Payment</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Payment Summary */}
-        <div className="space-y-3">
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Route:</span>
-            <span className="font-medium">{rideDetails.from} → {rideDetails.to}</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Date & Time:</span>
-            <span className="font-medium">{rideDetails.date} at {rideDetails.time}</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Passengers:</span>
-            <span className="font-medium">{rideDetails.passengers}</span>
-          </div>
-          <hr />
-          <div className="flex justify-between font-bold">
-            <span>Total Amount:</span>
-            <span className="text-green-600">₦{amount.toLocaleString()}</span>
-          </div>
+        <div className="flex justify-between text-sm">
+          <span>Route:</span>
+          <span>{bookingData.from} → {bookingData.to}</span>
         </div>
-
-        {/* Security Features */}
-        <div className="bg-gray-50 p-3 rounded-lg">
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <Shield className="h-4 w-4" />
-            <span>Secured by Paystack</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
-            <CheckCircle className="h-4 w-4" />
-            <span>256-bit SSL encryption</span>
-          </div>
+        <div className="flex justify-between text-sm">
+          <span>Date:</span>
+          <span>{bookingData.date}</span>
         </div>
-
-        {/* Payment Button */}
-        <div className="space-y-3">
-          <Button 
-            onClick={initializePaystack}
-            className="w-full bg-green-600 hover:bg-green-700"
-            disabled={isProcessing}
-          >
-            {isProcessing ? (
-              <span className="flex items-center">
-                <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                </svg>
-                Processing...
-              </span>
-            ) : (
-              <span className="flex items-center">
-                <CreditCard className="mr-2 h-4 w-4" />
-                Pay ₦{amount.toLocaleString()}
-              </span>
-            )}
-          </Button>
-
-          <Button 
-            variant="outline" 
-            onClick={onCancel}
-            className="w-full"
-            disabled={isProcessing}
-          >
-            Cancel Payment
-          </Button>
-        </div>
-
-        {/* Payment Methods */}
-        <div className="text-center text-xs text-gray-500">
-          <p>Accepts: Card • Bank Transfer • USSD • QR Code</p>
-        </div>
-      </CardContent>
-    </Card>
+      </div>
+      
+      <Button 
+        onClick={handlePayment}
+        className="w-full bg-green-600 hover:bg-green-700 text-white"
+        size="lg"
+      >
+        Pay ₦{amount.toLocaleString()} with Paystack
+      </Button>
+    </div>
   );
 };
 
