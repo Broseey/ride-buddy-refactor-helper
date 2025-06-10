@@ -12,16 +12,8 @@ interface AuthButtonsProps {
 const AuthButtons = ({ isMobile = false }: AuthButtonsProps) => {
   const { user, userProfile } = useAuth();
 
-  // Show user menu if user is logged in
-  if (user) {
-    const currentUser = {
-      id: user.id,
-      full_name: userProfile?.full_name || null,
-      email: user.email || null,
-      avatar_url: userProfile?.avatar_url || null,
-    };
-    
-    return <UserMenu currentUser={currentUser} />;
+  if (user && userProfile) {
+    return <UserMenu currentUser={userProfile} />;
   }
 
   const buttonSize = isMobile ? "sm" : "sm";
@@ -35,7 +27,7 @@ const AuthButtons = ({ isMobile = false }: AuthButtonsProps) => {
           size={buttonSize} 
           className={`text-white hover:bg-white/10 font-medium border-none ${buttonClasses}`}
         >
-          Login
+          Log in
         </Button>
       </Link>
       <Link to="/signup">
@@ -44,7 +36,7 @@ const AuthButtons = ({ isMobile = false }: AuthButtonsProps) => {
           size={buttonSize} 
           className={`bg-white text-black hover:bg-gray-100 font-medium ${buttonClasses}`}
         >
-          Signup
+          Sign up
         </Button>
       </Link>
     </div>

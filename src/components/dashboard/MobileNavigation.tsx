@@ -1,67 +1,49 @@
 
 import React from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { Home, Search, User, Calendar } from "lucide-react";
+import { Home, Clock, Calendar, User } from "lucide-react";
+import { 
+  Tabs, 
+  TabsContent, 
+  TabsList, 
+  TabsTrigger 
+} from "@/components/ui/tabs";
 
 interface MobileNavigationProps {
   activeTab: string;
-  setActiveTab: (tab: string) => void;
+  setActiveTab: (value: string) => void;
 }
 
 const MobileNavigation = ({ activeTab, setActiveTab }: MobileNavigationProps) => {
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  const handleNavigation = (tab: string, path: string) => {
-    setActiveTab(tab);
-    navigate(path);
-  };
-
-  const isActive = (path: string) => location.pathname === path;
-
   return (
-    <div className="bg-white border-t border-gray-200 px-4 py-2">
-      <div className="flex justify-around">
-        <button
-          onClick={() => handleNavigation("home", "/dashboard")}
-          className={`flex flex-col items-center py-2 px-3 ${
-            isActive("/dashboard") ? "text-black" : "text-gray-500"
-          }`}
-        >
-          <Home className="h-5 w-5" />
-          <span className="text-xs mt-1">Home</span>
-        </button>
-        
-        <button
-          onClick={() => handleNavigation("available", "/available")}
-          className={`flex flex-col items-center py-2 px-3 ${
-            isActive("/available") ? "text-black" : "text-gray-500"
-          }`}
-        >
-          <Search className="h-5 w-5" />
-          <span className="text-xs mt-1">Available</span>
-        </button>
-        
-        <button
-          onClick={() => handleNavigation("schedule", "/schedule")}
-          className={`flex flex-col items-center py-2 px-3 ${
-            isActive("/schedule") ? "text-black" : "text-gray-500"
-          }`}
-        >
-          <Calendar className="h-5 w-5" />
-          <span className="text-xs mt-1">Book</span>
-        </button>
-        
-        <button
-          onClick={() => handleNavigation("profile", "/profile")}
-          className={`flex flex-col items-center py-2 px-3 ${
-            isActive("/profile") ? "text-black" : "text-gray-500"
-          }`}
-        >
-          <User className="h-5 w-5" />
-          <span className="text-xs mt-1">Profile</span>
-        </button>
-      </div>
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-10">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="w-full grid grid-cols-4 bg-transparent border-t">
+          <TabsTrigger value="home" className="data-[state=active]:bg-black data-[state=active]:text-white rounded-none">
+            <div className="flex flex-col items-center py-2">
+              <Home className="h-5 w-5" />
+              <span className="text-xs mt-1">Home</span>
+            </div>
+          </TabsTrigger>
+          <TabsTrigger value="activity" className="data-[state=active]:bg-black data-[state=active]:text-white rounded-none">
+            <div className="flex flex-col items-center py-2">
+              <Clock className="h-5 w-5" />
+              <span className="text-xs mt-1">Activity</span>
+            </div>
+          </TabsTrigger>
+          <TabsTrigger value="schedule" className="data-[state=active]:bg-black data-[state=active]:text-white rounded-none">
+            <div className="flex flex-col items-center py-2">
+              <Calendar className="h-5 w-5" />
+              <span className="text-xs mt-1">Schedule</span>
+            </div>
+          </TabsTrigger>
+          <TabsTrigger value="account" className="data-[state=active]:bg-black data-[state=active]:text-white rounded-none">
+            <div className="flex flex-col items-center py-2">
+              <User className="h-5 w-5" />
+              <span className="text-xs mt-1">Account</span>
+            </div>
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
     </div>
   );
 };

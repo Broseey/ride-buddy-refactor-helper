@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import WelcomeHeader from "@/components/dashboard/WelcomeHeader";
@@ -9,6 +9,7 @@ import QuickRoutes from "@/components/dashboard/QuickRoutes";
 import RecentRides from "@/components/dashboard/RecentRides";
 import AccountLinks from "@/components/dashboard/AccountLinks";
 import RealTimeStatus from "@/components/dashboard/RealTimeStatus";
+import LiveActivityFeed from "@/components/dashboard/LiveActivityFeed";
 import MobileNavigation from "@/components/dashboard/MobileNavigation";
 import Footer from "@/components/dashboard/Footer";
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,54 +17,24 @@ import { useRides } from "@/hooks/useRides";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { CalendarPlus, Clock, MapPin } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { CalendarPlus, Clock, MapPin, Star } from "lucide-react";
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("home");
   const isMobile = useIsMobile();
   const { userProfile } = useAuth();
-  const { rides, isLoading, refetch } = useRides();
+  const { rides, isLoading } = useRides();
 
   const userName = userProfile?.full_name?.split(' ')[0] || 'User';
 
-  // Set up real-time subscription for user's rides
-  useEffect(() => {
-    const channel = supabase
-      .channel('user-rides-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'rides'
-        },
-        () => {
-          refetch();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [refetch]);
-
-  // Separate upcoming and past rides based on current date
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const upcomingRides = rides?.filter(ride => {
-    const rideDate = new Date(ride.departure_date);
-    rideDate.setHours(0, 0, 0, 0);
-    return (ride.status === 'confirmed' || ride.status === 'pending') && rideDate >= today;
-  }) || [];
+  // Separate upcoming and past rides
+  const upcomingRides = rides?.filter(ride => 
+    ride.status === 'confirmed' || ride.status === 'pending'
+  ) || [];
   
-  const pastRides = rides?.filter(ride => {
-    const rideDate = new Date(ride.departure_date);
-    rideDate.setHours(0, 0, 0, 0);
-    return ride.status === 'completed' || rideDate < today;
-  }) || [];
+  const pastRides = rides?.filter(ride => 
+    ride.status === 'completed'
+  ) || [];
 
   const nextUpcomingRide = upcomingRides[0] || null;
 
@@ -102,7 +73,7 @@ const Dashboard = () => {
         <WelcomeHeader name={userName} />
         
         {/* Trip Status Overview - Simplified */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Rides</CardTitle>
@@ -122,6 +93,17 @@ const Dashboard = () => {
             <CardContent>
               <div className="text-2xl font-bold">{upcomingRides.length}</div>
               <p className="text-xs text-muted-foreground">Scheduled</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Your Rating</CardTitle>
+              <Star className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">4.8</div>
+              <p className="text-xs text-muted-foreground">Based on your trips</p>
             </CardContent>
           </Card>
         </div>
@@ -185,14 +167,12 @@ const Dashboard = () => {
           </div>
         </div>
         
-        {/* Mobile Bottom Navigation - Make it functional */}
+        {/* Mobile Bottom Navigation */}
         {isMobile && (
-          <div className="fixed bottom-0 left-0 right-0 z-50">
-            <MobileNavigation 
-              activeTab={activeTab}
-              setActiveTab={setActiveTab}
-            />
-          </div>
+          <MobileNavigation 
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+          />
         )}
       </div>
       

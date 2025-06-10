@@ -35,73 +35,51 @@ const PaystackPayment: React.FC<PaystackPaymentProps> = ({
     const paystackPublicKey = "pk_test_fd701d387879bd23739ac1bc209e7ba24ea63a8f";
     
     // Check if Paystack script is loaded
-    if (typeof window.PaystackPop === 'undefined' || !window.PaystackPop) {
+    if (typeof window.PaystackPop === 'undefined') {
       toast.error("Payment system not loaded. Please refresh and try again.");
       setIsProcessing(false);
       return;
     }
 
-    const paymentReference = `uniride_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-    try {
-      const handler = window.PaystackPop.setup({
-        key: paystackPublicKey,
-        email: email,
-        amount: amount * 100, // Paystack expects amount in kobo (multiply by 100)
-        currency: 'NGN',
-        ref: paymentReference,
-        metadata: {
-          custom_fields: [
-            {
-              display_name: "Ride Route",
-              variable_name: "ride_route",
-              value: `${rideDetails.from} to ${rideDetails.to}`
-            },
-            {
-              display_name: "Travel Date",
-              variable_name: "travel_date",
-              value: `${rideDetails.date} at ${rideDetails.time}`
-            },
-            {
-              display_name: "Passengers",
-              variable_name: "passengers",
-              value: rideDetails.passengers.toString()
-            }
-          ]
-        },
-        callback: function(response: any) {
-          setIsProcessing(false);
-          console.log("Paystack response:", response);
-          
-          if (response.status === 'success') {
-            toast.success("Payment successful! Your ride has been booked.");
-            onSuccess(response.reference);
-          } else {
-            console.log("Payment failed or cancelled:", response);
-            toast.error("Payment was not completed successfully.");
-            onCancel();
+    const handler = window.PaystackPop.setup({
+      key: paystackPublicKey,
+      email: email,
+      amount: amount * 100, // Paystack expects amount in kobo
+      currency: 'NGN',
+      ref: `uniride_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      metadata: {
+        custom_fields: [
+          {
+            display_name: "Ride Route",
+            variable_name: "ride_route",
+            value: `${rideDetails.from} to ${rideDetails.to}`
+          },
+          {
+            display_name: "Travel Date",
+            variable_name: "travel_date",
+            value: `${rideDetails.date} at ${rideDetails.time}`
+          },
+          {
+            display_name: "Passengers",
+            variable_name: "passengers",
+            value: rideDetails.passengers.toString()
           }
-        },
-        onClose: function() {
-          setIsProcessing(false);
-          console.log("Payment popup closed");
-          toast.info("Payment window closed");
-          onCancel();
-        }
-      });
-
-      // Open the payment modal
-      if (handler && handler.openIframe) {
-        handler.openIframe();
-      } else {
-        throw new Error("Unable to initialize payment handler");
+        ]
+      },
+      callback: function(response: any) {
+        setIsProcessing(false);
+        toast.success("Payment successful!");
+        console.log("Payment successful:", response);
+        onSuccess(response.reference);
+      },
+      onClose: function() {
+        setIsProcessing(false);
+        toast.info("Payment cancelled");
+        onCancel();
       }
-    } catch (error) {
-      console.error("Paystack initialization error:", error);
-      setIsProcessing(false);
-      toast.error("Failed to initialize payment. Please try again.");
-      onCancel();
-    }
+    });
+
+    handler.openIframe();
   };
 
   return (

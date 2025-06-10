@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,7 +19,6 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<{ error: any }>;
   driverSignInWithGoogle: () => Promise<{ error: any }>;
   signOut: () => Promise<void>;
-  refreshUserProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -41,41 +39,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [adminProfile, setAdminProfile] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const refreshUserProfile = async () => {
-    if (!session?.user) return;
-    
-    try {
-      // Fetch user profile
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', session.user.id)
-        .single();
-      
-      setUserProfile(profile);
-
-      // Fetch driver profile
-      const { data: driverProf } = await supabase
-        .from('driver_profiles')
-        .select('*')
-        .eq('id', session.user.id)
-        .single();
-      
-      setDriverProfile(driverProf);
-
-      // Fetch admin profile
-      const { data: adminProf } = await supabase
-        .from('admin_users')
-        .select('*')
-        .eq('user_id', session.user.id)
-        .single();
-      
-      setAdminProfile(adminProf);
-    } catch (error) {
-      console.log('Error fetching profiles:', error);
-    }
-  };
-
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -86,7 +49,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (session?.user) {
           // Fetch user profiles after authentication
           setTimeout(async () => {
-            await refreshUserProfile();
+            try {
+              // Try to fetch user profile
+              const { data: profile } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', session.user.id)
+                .single();
+              
+              setUserProfile(profile);
+
+              // Try to fetch driver profile
+              const { data: driverProf } = await supabase
+                .from('driver_profiles')
+                .select('*')
+                .eq('id', session.user.id)
+                .single();
+              
+              setDriverProfile(driverProf);
+
+              // Try to fetch admin profile
+              const { data: adminProf } = await supabase
+                .from('admin_users')
+                .select('*')
+                .eq('user_id', session.user.id)
+                .single();
+              
+              setAdminProfile(adminProf);
+            } catch (error) {
+              console.log('Error fetching profiles:', error);
+            }
           }, 0);
         } else {
           setUserProfile(null);
@@ -296,7 +288,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signInWithGoogle,
     driverSignInWithGoogle,
     signOut,
-    refreshUserProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
