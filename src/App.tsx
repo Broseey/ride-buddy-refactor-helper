@@ -63,8 +63,7 @@ function App() {
               <Route path="/driver-signin" element={<DriverSignIn />} />
               <Route path="/driver-requirements" element={<DriverRequirements />} />
               
-              {/* Admin routes - simplified paths */}
-              <Route path="/admin" element={<AdminSignIn />} />
+              {/* Admin routes */}
               <Route path="/admin-signin" element={<AdminSignIn />} />
               
               {/* Protected user routes */}

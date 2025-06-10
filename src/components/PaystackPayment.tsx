@@ -41,14 +41,12 @@ const PaystackPayment: React.FC<PaystackPaymentProps> = ({
       return;
     }
 
-    const paymentReference = `uniride_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
     const handler = window.PaystackPop.setup({
       key: paystackPublicKey,
       email: email,
       amount: amount * 100, // Paystack expects amount in kobo
       currency: 'NGN',
-      ref: paymentReference,
+      ref: `uniride_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       metadata: {
         custom_fields: [
           {
@@ -70,18 +68,13 @@ const PaystackPayment: React.FC<PaystackPaymentProps> = ({
       },
       callback: function(response: any) {
         setIsProcessing(false);
-        if (response.status === 'success') {
-          toast.success("Payment successful! Your ride has been booked.");
-          console.log("Payment successful:", response);
-          onSuccess(response.reference);
-        } else {
-          toast.error("Payment was not completed successfully.");
-          onCancel();
-        }
+        toast.success("Payment successful!");
+        console.log("Payment successful:", response);
+        onSuccess(response.reference);
       },
       onClose: function() {
         setIsProcessing(false);
-        toast.info("Payment window closed");
+        toast.info("Payment cancelled");
         onCancel();
       }
     });

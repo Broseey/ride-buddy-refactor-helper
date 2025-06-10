@@ -2,7 +2,6 @@
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 import { Users, Car, MapPin, DollarSign, TrendingUp, Activity } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import RideManagement from "@/components/admin/RideManagement";
