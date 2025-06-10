@@ -5,12 +5,16 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
+import About from "./pages/About";
+import HowItWorks from "./pages/HowItWorks";
+import Help from "./pages/Help";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import Dashboard from "./pages/Dashboard";
-import Schedule from "./pages/Schedule";
-import MyRides from "./pages/MyRides";
 import Profile from "./pages/Profile";
+import MyRides from "./pages/MyRides";
+import Schedule from "./pages/Schedule";
+import Available from "./pages/Available";
 import Drive from "./pages/Drive";
 import DriverSignUp from "./pages/DriverSignUp";
 import DriverSignIn from "./pages/DriverSignIn";
@@ -21,14 +25,10 @@ import DriverRequirements from "./pages/DriverRequirements";
 import AdminSignIn from "./pages/AdminSignIn";
 import AdminDashboard from "./pages/AdminDashboard";
 import BookingConfirmation from "./pages/BookingConfirmation";
-import About from "./pages/About";
-import HowItWorks from "./pages/HowItWorks";
-import Help from "./pages/Help";
-import TermsAndConditions from "./pages/TermsAndConditions";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import Available from "./pages/Available";
 import Partner from "./pages/Partner";
 import JoinAsCompany from "./pages/JoinAsCompany";
+import TermsAndConditions from "./pages/TermsAndConditions";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import DriverRoute from "./components/auth/DriverRoute";
@@ -39,48 +39,31 @@ const queryClient = new QueryClient();
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <AuthProvider>
+      <AuthProvider>
+        <TooltipProvider>
           <Toaster />
           <BrowserRouter>
             <Routes>
-              {/* Public routes */}
               <Route path="/" element={<Index />} />
-              <Route path="/signin" element={<SignIn />} />
-              <Route path="/signup" element={<SignUp />} />
               <Route path="/about" element={<About />} />
               <Route path="/how-it-works" element={<HowItWorks />} />
               <Route path="/help" element={<Help />} />
-              <Route path="/terms" element={<TermsAndConditions />} />
-              <Route path="/privacy" element={<PrivacyPolicy />} />
-              <Route path="/available" element={<Available />} />
-              <Route path="/partner" element={<Partner />} />
-              <Route path="/join-as-company" element={<JoinAsCompany />} />
-              
-              {/* Driver routes */}
+              <Route path="/signin" element={<SignIn />} />
+              <Route path="/signup" element={<SignUp />} />
               <Route path="/drive" element={<Drive />} />
               <Route path="/driver-signup" element={<DriverSignUp />} />
               <Route path="/driver-signin" element={<DriverSignIn />} />
-              <Route path="/driver-requirements" element={<DriverRequirements />} />
-              
-              {/* Admin routes - simplified paths */}
-              <Route path="/admin" element={<AdminSignIn />} />
               <Route path="/admin-signin" element={<AdminSignIn />} />
+              <Route path="/admin" element={<AdminSignIn />} />
+              <Route path="/partner" element={<Partner />} />
+              <Route path="/join-as-company" element={<JoinAsCompany />} />
+              <Route path="/terms" element={<TermsAndConditions />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
               
-              {/* Protected user routes */}
+              {/* Protected Routes */}
               <Route path="/dashboard" element={
                 <ProtectedRoute>
                   <Dashboard />
-                </ProtectedRoute>
-              } />
-              <Route path="/schedule" element={
-                <ProtectedRoute>
-                  <Schedule />
-                </ProtectedRoute>
-              } />
-              <Route path="/my-rides" element={
-                <ProtectedRoute>
-                  <MyRides />
                 </ProtectedRoute>
               } />
               <Route path="/profile" element={
@@ -88,13 +71,28 @@ function App() {
                   <Profile />
                 </ProtectedRoute>
               } />
+              <Route path="/my-rides" element={
+                <ProtectedRoute>
+                  <MyRides />
+                </ProtectedRoute>
+              } />
+              <Route path="/schedule" element={
+                <ProtectedRoute>
+                  <Schedule />
+                </ProtectedRoute>
+              } />
+              <Route path="/available" element={
+                <ProtectedRoute>
+                  <Available />
+                </ProtectedRoute>
+              } />
               <Route path="/booking-confirmation" element={
                 <ProtectedRoute>
                   <BookingConfirmation />
                 </ProtectedRoute>
               } />
-              
-              {/* Protected driver routes */}
+
+              {/* Driver Routes */}
               <Route path="/driver-dashboard" element={
                 <DriverRoute>
                   <DriverDashboard />
@@ -110,20 +108,24 @@ function App() {
                   <DriverHelp />
                 </DriverRoute>
               } />
-              
-              {/* Protected admin routes */}
+              <Route path="/driver-requirements" element={
+                <DriverRoute>
+                  <DriverRequirements />
+                </DriverRoute>
+              } />
+
+              {/* Admin Routes */}
               <Route path="/admin-dashboard" element={
                 <AdminRoute>
                   <AdminDashboard />
                 </AdminRoute>
               } />
-              
-              {/* 404 route */}
+
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
-        </AuthProvider>
-      </TooltipProvider>
+        </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

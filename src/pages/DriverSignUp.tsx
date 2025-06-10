@@ -3,7 +3,8 @@ import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Mail, Lock, User, Phone, Car } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Mail, Lock, User, Phone, Car, FileText, Calendar, Hash } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import {
   Card,
@@ -38,6 +39,24 @@ const formSchema = z.object({
     message: "Password must be at least 8 characters",
   }),
   confirmPassword: z.string(),
+  licenseNumber: z.string().min(5, {
+    message: "License number is required",
+  }),
+  vehicleMake: z.string().min(2, {
+    message: "Vehicle make is required",
+  }),
+  vehicleModel: z.string().min(2, {
+    message: "Vehicle model is required",
+  }),
+  vehicleYear: z.string().min(4, {
+    message: "Vehicle year is required",
+  }),
+  vehiclePlate: z.string().min(3, {
+    message: "Vehicle plate number is required",
+  }),
+  vehicleColor: z.string().min(2, {
+    message: "Vehicle color is required",
+  }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -64,6 +83,12 @@ const DriverSignUp = () => {
       phoneNumber: "",
       password: "",
       confirmPassword: "",
+      licenseNumber: "",
+      vehicleMake: "",
+      vehicleModel: "",
+      vehicleYear: "",
+      vehiclePlate: "",
+      vehicleColor: "",
     },
   });
 
@@ -127,8 +152,8 @@ const DriverSignUp = () => {
                 <div className="bg-blue-50 p-4 rounded-lg">
                   <p className="text-sm text-blue-800">
                     <strong>What's Next?</strong><br />
-                    Our admin team will review your application within <strong>1 week</strong>. 
-                    You'll receive an email notification once your account is approved for onboarding and registration.
+                    Your registration is pending admin approval. Our team will review your application within <strong>1 week</strong> for onboarding and registration. 
+                    You'll receive an email notification once approved.
                   </p>
                 </div>
                 <p className="text-sm text-gray-500">
@@ -160,7 +185,7 @@ const DriverSignUp = () => {
       <Navbar />
       
       <div className="flex-1 flex items-center justify-center px-4 py-12">
-        <Card className="w-full max-w-md bg-white border-0 shadow-lg">
+        <Card className="w-full max-w-2xl bg-white border-0 shadow-lg">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-bold tracking-tight">Join as Driver</CardTitle>
             <CardDescription>
@@ -202,120 +227,250 @@ const DriverSignUp = () => {
                 <span className="w-full border-t" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-muted-foreground">Or create driver account with email</span>
+                <span className="bg-white px-2 text-muted-foreground">Or create driver account with details</span>
               </div>
             </div>
 
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="fullName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-gray-900">Full Name</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-                          <Input
-                            className="pl-10 bg-white border-gray-200"
-                            placeholder="Enter your full name"
-                            {...field}
-                          />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="fullName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-gray-900">Full Name</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                            <Input
+                              className="pl-10 bg-white border-gray-200"
+                              placeholder="Enter your full name"
+                              {...field}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-gray-900">Email</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-                          <Input
-                            className="pl-10 bg-white border-gray-200"
-                            placeholder="name@example.com"
-                            type="email"
-                            {...field}
-                          />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-gray-900">Email</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                            <Input
+                              className="pl-10 bg-white border-gray-200"
+                              placeholder="name@example.com"
+                              type="email"
+                              {...field}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <FormField
-                  control={form.control}
-                  name="phoneNumber"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-gray-900">Phone Number</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-                          <Input
-                            className="pl-10 bg-white border-gray-200"
-                            placeholder="+234 123 456 7890"
-                            type="tel"
-                            {...field}
-                          />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-gray-900">Password</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-                          <Input
-                            className="pl-10 bg-white border-gray-200"
-                            placeholder="••••••••"
-                            type="password"
-                            {...field}
-                          />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <FormField
+                    control={form.control}
+                    name="phoneNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-gray-900">Phone Number</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                            <Input
+                              className="pl-10 bg-white border-gray-200"
+                              placeholder="+234 123 456 7890"
+                              type="tel"
+                              {...field}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <FormField
-                  control={form.control}
-                  name="confirmPassword"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-gray-900">Confirm Password</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-                          <Input
-                            className="pl-10 bg-white border-gray-200"
-                            placeholder="••••••••"
-                            type="password"
-                            {...field}
-                          />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <FormField
+                    control={form.control}
+                    name="licenseNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-gray-900">Driver's License Number</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <FileText className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                            <Input
+                              className="pl-10 bg-white border-gray-200"
+                              placeholder="License number"
+                              {...field}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Vehicle Information</h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="vehicleMake"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-gray-900">Vehicle Make</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Car className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                              <Input
+                                className="pl-10 bg-white border-gray-200"
+                                placeholder="e.g., Toyota"
+                                {...field}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="vehicleModel"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-gray-900">Vehicle Model</FormLabel>
+                          <FormControl>
+                            <Input
+                              className="bg-white border-gray-200"
+                              placeholder="e.g., Camry"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="vehicleYear"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-gray-900">Vehicle Year</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                              <Input
+                                className="pl-10 bg-white border-gray-200"
+                                placeholder="e.g., 2020"
+                                {...field}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="vehiclePlate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-gray-900">License Plate</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                              <Input
+                                className="pl-10 bg-white border-gray-200"
+                                placeholder="e.g., ABC 123 XYZ"
+                                {...field}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="vehicleColor"
+                      render={({ field }) => (
+                        <FormItem className="md:col-span-2">
+                          <FormLabel className="text-gray-900">Vehicle Color</FormLabel>
+                          <FormControl>
+                            <Input
+                              className="bg-white border-gray-200"
+                              placeholder="e.g., Silver"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-gray-900">Password</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                            <Input
+                              className="pl-10 bg-white border-gray-200"
+                              placeholder="••••••••"
+                              type="password"
+                              {...field}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="confirmPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-gray-900">Confirm Password</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                            <Input
+                              className="pl-10 bg-white border-gray-200"
+                              placeholder="••••••••"
+                              type="password"
+                              {...field}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
                 
                 <Button
                   type="submit"
