@@ -3,11 +3,10 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, Clock, Users, Shield, Star, ArrowRight, Car, Route, Zap } from "lucide-react";
+import { MapPin, Clock, Users, Shield, Star, ArrowRight, Sparkles, Target, Zap, Search } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import RideBookingFormNew from "@/components/RideBookingFormNew";
 import AvailableRides from "@/components/AvailableRides";
-import QuickRoutes from "@/components/dashboard/QuickRoutes";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
@@ -21,15 +20,8 @@ const Index = () => {
       navigate('/signin');
       return;
     }
+    // If user is authenticated, they can use the booking form directly
   };
-
-  // Popular routes for quick booking
-  const popularRoutes = [
-    { from: "Covenant University, Ota", to: "Lagos", price: "₦2,500" },
-    { from: "University of Ibadan", to: "Lagos", price: "₦3,000" },
-    { from: "Babcock University, Ilishan-Remo", to: "Lagos", price: "₦2,200" },
-    { from: "Redeemer's University, Ede", to: "Lagos", price: "₦3,500" }
-  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
@@ -41,36 +33,36 @@ const Index = () => {
           {/* Left Column - Content */}
           <div className="space-y-8">
             <div className="space-y-6">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="bg-black rounded-full p-2">
+                  <Sparkles className="h-4 w-4 text-white" />
+                </div>
+                <span className="text-sm font-medium text-gray-600">
+                  {user ? `Welcome back!` : `Nigeria's #1 Student Ride Platform`}
+                </span>
+              </div>
+
               <h1 className="text-4xl md:text-6xl font-bold text-gray-900 leading-tight">
-                Campus Rides
-                <span className="block text-black">Made Simple</span>
+                {user ? (
+                  <>
+                    Ready for your
+                    <span className="block text-black">next journey?</span>
+                  </>
+                ) : (
+                  <>
+                    Campus Rides
+                    <span className="block text-black">Made Simple</span>
+                  </>
+                )}
               </h1>
               
               <p className="text-xl text-gray-600 leading-relaxed">
-                Connect with fellow students for safe, affordable rides between universities and cities across Nigeria.
+                {user ? (
+                  "Book your ride, join available trips, or explore new routes with fellow students across Nigeria."
+                ) : (
+                  "Connect with fellow students for safe, affordable rides between universities and cities across Nigeria."
+                )}
               </p>
-              
-              {/* Illustrations */}
-              <div className="flex items-center gap-8 my-8">
-                <div className="flex flex-col items-center text-center">
-                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-2">
-                    <Car className="h-8 w-8 text-blue-600" />
-                  </div>
-                  <span className="text-sm text-gray-600">Safe Rides</span>
-                </div>
-                <div className="flex flex-col items-center text-center">
-                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-2">
-                    <Route className="h-8 w-8 text-green-600" />
-                  </div>
-                  <span className="text-sm text-gray-600">Campus Routes</span>
-                </div>
-                <div className="flex flex-col items-center text-center">
-                  <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-2">
-                    <Zap className="h-8 w-8 text-purple-600" />
-                  </div>
-                  <span className="text-sm text-gray-600">Quick Booking</span>
-                </div>
-              </div>
               
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button 
@@ -78,32 +70,56 @@ const Index = () => {
                   className="bg-black text-white hover:bg-gray-800 px-8 py-3 text-lg font-medium transform hover:scale-105 transition-all duration-200" 
                   onClick={handleBookRideClick}
                 >
-                  Book a Ride
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                  <Target className="mr-2 h-5 w-5" />
+                  {user ? "Book Another Ride" : "Book a Ride"}
                 </Button>
                 
-                <Button 
-                  variant="outline" 
-                  size="lg" 
-                  className="border-black text-black hover:bg-black hover:text-white px-8 py-3 text-lg font-medium transition-all duration-200" 
-                  onClick={() => navigate('/drive')}
-                >
-                  Become a Driver
-                </Button>
+                {!user && (
+                  <Button 
+                    variant="outline" 
+                    size="lg" 
+                    className="border-black text-black hover:bg-black hover:text-white px-8 py-3 text-lg font-medium transition-all duration-200" 
+                    onClick={() => navigate('/drive')}
+                  >
+                    <Zap className="mr-2 h-5 w-5" />
+                    Become a Driver
+                  </Button>
+                )}
+
+                {user && (
+                  <Button 
+                    variant="outline" 
+                    size="lg" 
+                    className="border-black text-black hover:bg-black hover:text-white px-8 py-3 text-lg font-medium transition-all duration-200" 
+                    onClick={() => navigate('/available')}
+                  >
+                    <Search className="mr-2 h-5 w-5" />
+                    Browse Rides
+                  </Button>
+                )}
               </div>
             </div>
             
-            {/* Stats */}
+            {/* Illustration/Stats */}
             <div className="grid grid-cols-3 gap-6 pt-8">
               <div className="text-center">
+                <div className="bg-green-100 rounded-full p-4 w-16 h-16 mx-auto mb-3 flex items-center justify-center">
+                  <Users className="h-8 w-8 text-green-600" />
+                </div>
                 <div className="text-3xl font-bold text-black">10K+</div>
                 <div className="text-sm text-gray-600">Happy Students</div>
               </div>
               <div className="text-center">
+                <div className="bg-blue-100 rounded-full p-4 w-16 h-16 mx-auto mb-3 flex items-center justify-center">
+                  <MapPin className="h-8 w-8 text-blue-600" />
+                </div>
                 <div className="text-3xl font-bold text-black">50+</div>
                 <div className="text-sm text-gray-600">Universities</div>
               </div>
               <div className="text-center">
+                <div className="bg-purple-100 rounded-full p-4 w-16 h-16 mx-auto mb-3 flex items-center justify-center">
+                  <Shield className="h-8 w-8 text-purple-600" />
+                </div>
                 <div className="text-3xl font-bold text-black">99%</div>
                 <div className="text-sm text-gray-600">Safety Rate</div>
               </div>
@@ -115,19 +131,6 @@ const Index = () => {
             <RideBookingFormNew />
           </div>
         </div>
-
-        {/* Quick Routes for Signed-in Users */}
-        {user && (
-          <div className="mt-16">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome back, {user.email?.split('@')[0]}!</h2>
-              <p className="text-gray-600">Quick book your favorite routes</p>
-            </div>
-            <div className="max-w-2xl mx-auto">
-              <QuickRoutes routes={popularRoutes} />
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Available Rides Section */}
@@ -148,7 +151,7 @@ const Index = () => {
         </div>
       </section>
       
-      {/* Features Section with Illustrations */}
+      {/* Features Section */}
       <section className="py-20 bg-gray-50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
@@ -163,7 +166,7 @@ const Index = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <Card className="text-center hover:shadow-lg transition-shadow duration-300 border-0 bg-white">
               <CardHeader>
-                <div className="w-16 h-16 bg-black rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 bg-gradient-to-r from-green-400 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Shield className="h-8 w-8 text-white" />
                 </div>
                 <CardTitle className="text-xl font-semibold">Verified Drivers</CardTitle>
@@ -175,7 +178,7 @@ const Index = () => {
             
             <Card className="text-center hover:shadow-lg transition-shadow duration-300 border-0 bg-white">
               <CardHeader>
-                <div className="w-16 h-16 bg-black rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 bg-gradient-to-r from-blue-400 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
                   <MapPin className="h-8 w-8 text-white" />
                 </div>
                 <CardTitle className="text-xl font-semibold">Campus Routes</CardTitle>
@@ -187,7 +190,7 @@ const Index = () => {
             
             <Card className="text-center hover:shadow-lg transition-shadow duration-300 border-0 bg-white">
               <CardHeader>
-                <div className="w-16 h-16 bg-black rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 bg-gradient-to-r from-purple-400 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Clock className="h-8 w-8 text-white" />
                 </div>
                 <CardTitle className="text-xl font-semibold">Flexible Timing</CardTitle>
@@ -199,7 +202,7 @@ const Index = () => {
             
             <Card className="text-center hover:shadow-lg transition-shadow duration-300 border-0 bg-white">
               <CardHeader>
-                <div className="w-16 h-16 bg-black rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 bg-gradient-to-r from-orange-400 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Users className="h-8 w-8 text-white" />
                 </div>
                 <CardTitle className="text-xl font-semibold">Student Community</CardTitle>
@@ -234,7 +237,7 @@ const Index = () => {
               size="lg" 
               variant="outline" 
               onClick={() => navigate('/drive')} 
-              className="border-white hover:bg-white px-8 py-3 text-lg font-medium text-zinc-950"
+              className="border-white hover:bg-white px-8 py-3 text-lg font-medium text-white hover:text-black"
             >
               Start Driving
             </Button>

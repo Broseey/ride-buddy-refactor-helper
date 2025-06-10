@@ -27,8 +27,14 @@ const UserMenu = ({ currentUser }: UserMenuProps) => {
   const { signOut } = useAuth();
 
   const handleSignOut = async () => {
-    await signOut();
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   };
+
+  const displayName = currentUser.full_name || currentUser.email?.split('@')[0] || 'User';
 
   return (
     <DropdownMenu>
@@ -38,14 +44,14 @@ const UserMenu = ({ currentUser }: UserMenuProps) => {
             <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
               <User className="h-4 w-4" />
             </div>
-            <span className="font-medium">{currentUser.full_name || 'User'}</span>
+            <span className="font-medium">{displayName}</span>
             <ChevronDown className="h-4 w-4" />
           </div>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <div className="px-3 py-2 border-b">
-          <p className="font-medium">{currentUser.full_name || 'User'}</p>
+          <p className="font-medium">{displayName}</p>
           <p className="text-sm text-gray-500">{currentUser.email}</p>
         </div>
         <DropdownMenuItem asChild>

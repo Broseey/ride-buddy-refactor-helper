@@ -1,7 +1,7 @@
 
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Home, Calendar, User, Car, MapPin } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Home, Search, User, Calendar } from "lucide-react";
 
 interface MobileNavigationProps {
   activeTab: string;
@@ -9,64 +9,58 @@ interface MobileNavigationProps {
 }
 
 const MobileNavigation = ({ activeTab, setActiveTab }: MobileNavigationProps) => {
+  const navigate = useNavigate();
   const location = useLocation();
-  
-  const navItems = [
-    {
-      id: "home",
-      label: "Home",
-      icon: Home,
-      path: "/dashboard"
-    },
-    {
-      id: "rides",
-      label: "My Rides",
-      icon: Calendar,
-      path: "/my-rides"
-    },
-    {
-      id: "book",
-      label: "Book",
-      icon: Car,
-      path: "/"
-    },
-    {
-      id: "available",
-      label: "Available",
-      icon: MapPin,
-      path: "/schedule"
-    },
-    {
-      id: "profile",
-      label: "Profile",
-      icon: User,
-      path: "/profile"
-    }
-  ];
+
+  const handleNavigation = (tab: string, path: string) => {
+    setActiveTab(tab);
+    navigate(path);
+  };
+
+  const isActive = (path: string) => location.pathname === path;
 
   return (
     <div className="bg-white border-t border-gray-200 px-4 py-2">
       <div className="flex justify-around">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = location.pathname === item.path;
-          
-          return (
-            <Link
-              key={item.id}
-              to={item.path}
-              onClick={() => setActiveTab(item.id)}
-              className={`flex flex-col items-center py-2 px-3 rounded-lg transition-colors ${
-                isActive 
-                  ? 'text-black bg-gray-100' 
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              <Icon className="h-5 w-5 mb-1" />
-              <span className="text-xs font-medium">{item.label}</span>
-            </Link>
-          );
-        })}
+        <button
+          onClick={() => handleNavigation("home", "/dashboard")}
+          className={`flex flex-col items-center py-2 px-3 ${
+            isActive("/dashboard") ? "text-black" : "text-gray-500"
+          }`}
+        >
+          <Home className="h-5 w-5" />
+          <span className="text-xs mt-1">Home</span>
+        </button>
+        
+        <button
+          onClick={() => handleNavigation("available", "/available")}
+          className={`flex flex-col items-center py-2 px-3 ${
+            isActive("/available") ? "text-black" : "text-gray-500"
+          }`}
+        >
+          <Search className="h-5 w-5" />
+          <span className="text-xs mt-1">Available</span>
+        </button>
+        
+        <button
+          onClick={() => handleNavigation("schedule", "/schedule")}
+          className={`flex flex-col items-center py-2 px-3 ${
+            isActive("/schedule") ? "text-black" : "text-gray-500"
+          }`}
+        >
+          <Calendar className="h-5 w-5" />
+          <span className="text-xs mt-1">Book</span>
+        </button>
+        
+        <button
+          onClick={() => handleNavigation("profile", "/profile")}
+          className={`flex flex-col items-center py-2 px-3 ${
+            isActive("/profile") ? "text-black" : "text-gray-500"
+          }`}
+        >
+          <User className="h-5 w-5" />
+          <span className="text-xs mt-1">Profile</span>
+        </button>
       </div>
     </div>
   );

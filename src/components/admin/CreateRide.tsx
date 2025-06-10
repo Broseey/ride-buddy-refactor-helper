@@ -11,28 +11,6 @@ import { toast } from "sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-// Nigerian locations data
-const nigerianLocations = {
-  universities: [
-    "Babcock University, Ilishan-Remo",
-    "Afe Babalola University, Ado-Ekiti",
-    "Redeemer's University, Ede",
-    "Bowen University, Iwo",
-    "Covenant University, Ota",
-    "Lead City University, Ibadan",
-    "Pan-Atlantic University, Lagos",
-    "Landmark University, Omu-Aran",
-    "American University of Nigeria, Yola"
-  ],
-  states: [
-    "Abia", "Adamawa", "Akwa Ibom", "Anambra", "Bauchi", "Bayelsa", "Benue", 
-    "Borno", "Cross River", "Delta", "Ebonyi", "Edo", "Ekiti", "Enugu", 
-    "FCT - Abuja", "Gombe", "Imo", "Jigawa", "Kaduna", "Kano", "Katsina", 
-    "Kebbi", "Kogi", "Kwara", "Lagos", "Nasarawa", "Niger", "Ogun", "Ondo", 
-    "Osun", "Oyo", "Plateau", "Rivers", "Sokoto", "Taraba", "Yobe", "Zamfara"
-  ]
-};
-
 const CreateRide = () => {
   const [formData, setFormData] = useState({
     fromLocation: '',
@@ -49,9 +27,6 @@ const CreateRide = () => {
 
   const createRideMutation = useMutation({
     mutationFn: async (rideData: any) => {
-      const { data: userData, error: userError } = await supabase.auth.getUser();
-      if (userError) throw userError;
-
       const { data, error } = await supabase
         .from('rides')
         .insert([{
@@ -63,9 +38,7 @@ const CreateRide = () => {
           price: parseFloat(rideData.price),
           booking_type: 'admin_created',
           status: 'available',
-          user_id: userData.user?.id,
-          vehicle_type: rideData.vehicleType,
-          description: rideData.description
+          user_id: (await supabase.auth.getUser()).data.user?.id
         }])
         .select()
         .single();
@@ -76,7 +49,6 @@ const CreateRide = () => {
     onSuccess: () => {
       toast.success('Ride created successfully!');
       queryClient.invalidateQueries({ queryKey: ['admin-rides'] });
-      queryClient.invalidateQueries({ queryKey: ['available-rides'] });
       setFormData({
         fromLocation: '',
         toLocation: '',
@@ -113,8 +85,6 @@ const CreateRide = () => {
     }));
   };
 
-  const allLocations = [...nigerianLocations.universities, ...nigerianLocations.states];
-
   return (
     <Card>
       <CardHeader>
@@ -130,19 +100,14 @@ const CreateRide = () => {
               <Label htmlFor="fromLocation">From Location *</Label>
               <div className="relative">
                 <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Select
+                <Input
+                  id="fromLocation"
+                  placeholder="e.g. Lagos"
                   value={formData.fromLocation}
-                  onValueChange={(value) => handleInputChange('fromLocation', value)}
-                >
-                  <SelectTrigger className="pl-10">
-                    <SelectValue placeholder="Select departure location" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {allLocations.map((location) => (
-                      <SelectItem key={location} value={location}>{location}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onChange={(e) => handleInputChange('fromLocation', e.target.value)}
+                  className="pl-10"
+                  required
+                />
               </div>
             </div>
 
@@ -150,19 +115,14 @@ const CreateRide = () => {
               <Label htmlFor="toLocation">To Location *</Label>
               <div className="relative">
                 <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Select
+                <Input
+                  id="toLocation"
+                  placeholder="e.g. University of Ibadan"
                   value={formData.toLocation}
-                  onValueChange={(value) => handleInputChange('toLocation', value)}
-                >
-                  <SelectTrigger className="pl-10">
-                    <SelectValue placeholder="Select destination location" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {allLocations.map((location) => (
-                      <SelectItem key={location} value={location}>{location}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onChange={(e) => handleInputChange('toLocation', e.target.value)}
+                  className="pl-10"
+                  required
+                />
               </div>
             </div>
           </div>

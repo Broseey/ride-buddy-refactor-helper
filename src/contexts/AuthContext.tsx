@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -40,42 +41,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [adminProfile, setAdminProfile] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchUserProfiles = async (userId: string) => {
+  const refreshUserProfile = async () => {
+    if (!session?.user) return;
+    
     try {
-      // Try to fetch user profile
+      // Fetch user profile
       const { data: profile } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', userId)
+        .eq('id', session.user.id)
         .single();
       
       setUserProfile(profile);
 
-      // Try to fetch driver profile
+      // Fetch driver profile
       const { data: driverProf } = await supabase
         .from('driver_profiles')
         .select('*')
-        .eq('id', userId)
+        .eq('id', session.user.id)
         .single();
       
       setDriverProfile(driverProf);
 
-      // Try to fetch admin profile
+      // Fetch admin profile
       const { data: adminProf } = await supabase
         .from('admin_users')
         .select('*')
-        .eq('user_id', userId)
+        .eq('user_id', session.user.id)
         .single();
       
       setAdminProfile(adminProf);
     } catch (error) {
       console.log('Error fetching profiles:', error);
-    }
-  };
-
-  const refreshUserProfile = async () => {
-    if (user) {
-      await fetchUserProfiles(user.id);
     }
   };
 
@@ -89,7 +86,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (session?.user) {
           // Fetch user profiles after authentication
           setTimeout(async () => {
-            await fetchUserProfiles(session.user.id);
+            await refreshUserProfile();
           }, 0);
         } else {
           setUserProfile(null);
