@@ -1,15 +1,11 @@
 
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
+import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Users, Target, Eye, Award, Quote } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Users, Target, Award, Globe, Shield, Heart } from "lucide-react";
 import Navbar from "@/components/Navbar";
 
 const About = () => {
-  const [showCEOLetter, setShowCEOLetter] = useState(false);
-  const [showDirectorLetter, setShowDirectorLetter] = useState(false);
-
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -21,8 +17,7 @@ const About = () => {
             About Uniride
           </h1>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-            Connecting Nigerian students with safe, affordable, and reliable transportation 
-            solutions between universities and cities.
+            Connecting Nigerian students through safe, affordable, and reliable campus transportation solutions.
           </p>
         </div>
       </section>
@@ -30,95 +25,87 @@ const About = () => {
       {/* Mission & Vision */}
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-3xl md:text-4xl font-bold mb-6">Our Mission</h2>
-              <div className="flex items-start gap-4 mb-6">
-                <Target className="h-8 w-8 text-black mt-1" />
-                <p className="text-lg text-gray-600">
-                  To revolutionize student transportation in Nigeria by providing a safe, 
-                  affordable, and efficient ride-sharing platform that connects universities 
-                  with major cities, making travel accessible for every student.
+          <div className="grid md:grid-cols-2 gap-12">
+            <Card className="border-0 shadow-lg">
+              <CardHeader>
+                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                  <Target className="h-8 w-8 text-blue-600" />
+                </div>
+                <CardTitle className="text-2xl">Our Mission</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600 text-lg">
+                  To revolutionize campus transportation in Nigeria by providing students with safe, 
+                  affordable, and convenient ride-sharing solutions that connect universities to cities 
+                  and communities across the country.
                 </p>
-              </div>
-              
-              <h3 className="text-2xl font-bold mb-4">Our Vision</h3>
-              <div className="flex items-start gap-4">
-                <Eye className="h-8 w-8 text-black mt-1" />
-                <p className="text-lg text-gray-600">
-                  To become the leading student transportation network across Africa, 
-                  fostering academic mobility and creating opportunities for students 
-                  to pursue their dreams without transportation barriers.
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-lg">
+              <CardHeader>
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                  <Globe className="h-8 w-8 text-green-600" />
+                </div>
+                <CardTitle className="text-2xl">Our Vision</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600 text-lg">
+                  To become Nigeria's leading campus transportation platform, fostering a community 
+                  where every student has access to reliable, safe, and affordable transportation 
+                  options for their academic journey.
                 </p>
-              </div>
-            </div>
-            <div className="bg-gray-200 rounded-lg h-80 flex items-center justify-center">
-              <Users className="h-24 w-24 text-gray-400" />
-              <span className="ml-4 text-gray-500 text-lg">Mission Image</span>
-            </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>
 
-      {/* Leadership Section */}
+      {/* Our Story */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Our Leadership</h2>
-            <p className="text-xl text-gray-600">Meet the team driving Uniride's mission</p>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Our Story</h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Born from the real challenges faced by Nigerian students
+            </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {/* CEO Card */}
-            <Card className="text-center hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="w-32 h-32 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
-                  <Users className="h-16 w-16 text-gray-400" />
-                </div>
-                <CardTitle className="text-xl">Adebayo Ogunlana</CardTitle>
-                <p className="text-gray-600">Chief Executive Officer</p>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600 mb-4">
-                  With over 10 years of experience in transportation and logistics, 
-                  Adebayo leads Uniride's vision to transform student mobility across Nigeria.
+          <div className="max-w-4xl mx-auto">
+            <div className="space-y-8">
+              <div className="bg-gray-50 p-8 rounded-xl">
+                <h3 className="text-2xl font-bold mb-4">The Challenge</h3>
+                <p className="text-gray-600 text-lg mb-6">
+                  Nigerian students have long struggled with unreliable and unsafe transportation options 
+                  between their universities and home cities. High costs, safety concerns, and lack of 
+                  convenient booking systems made travel a constant source of stress and financial burden.
                 </p>
-                <Button 
-                  onClick={() => setShowCEOLetter(true)}
-                  className="bg-black text-white hover:bg-gray-800"
-                >
-                  Read CEO Letter
-                </Button>
-              </CardContent>
-            </Card>
+              </div>
 
-            {/* Director Card */}
-            <Card className="text-center hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="w-32 h-32 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
-                  <Users className="h-16 w-16 text-gray-400" />
-                </div>
-                <CardTitle className="text-xl">Dr. Funmi Adebayo</CardTitle>
-                <p className="text-gray-600">Director of Operations</p>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600 mb-4">
-                  Former Vice-Chancellor at Lagos State University, Dr. Adebayo brings 
-                  deep understanding of student needs and academic mobility challenges.
+              <div className="bg-blue-50 p-8 rounded-xl">
+                <h3 className="text-2xl font-bold mb-4">The Solution</h3>
+                <p className="text-gray-600 text-lg mb-6">
+                  Uniride was created to address these exact problems. By connecting verified drivers 
+                  with students traveling similar routes, we've created a community-driven platform 
+                  that prioritizes safety, affordability, and convenience. Our technology brings 
+                  transparency and trust to campus transportation.
                 </p>
-                <Button 
-                  onClick={() => setShowDirectorLetter(true)}
-                  className="bg-black text-white hover:bg-gray-800"
-                >
-                  Read Director Letter
-                </Button>
-              </CardContent>
-            </Card>
+              </div>
+
+              <div className="bg-green-50 p-8 rounded-xl">
+                <h3 className="text-2xl font-bold mb-4">The Impact</h3>
+                <p className="text-gray-600 text-lg mb-6">
+                  Since our launch, we've facilitated thousands of safe trips, saved students millions 
+                  in transportation costs, and built a thriving community of students and drivers across 
+                  Nigeria. We're not just a ride-sharing platform – we're a student support network.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Values Section */}
+      {/* Values */}
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
@@ -127,47 +114,47 @@ const About = () => {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            <Card className="text-center">
+            <Card className="text-center border-0 shadow-lg">
               <CardHeader>
-                <div className="mx-auto mb-4 w-16 h-16 bg-black rounded-full flex items-center justify-center">
-                  <Award className="h-8 w-8 text-white" />
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Shield className="h-8 w-8 text-red-600" />
                 </div>
                 <CardTitle>Safety First</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600">
-                  Every driver is thoroughly vetted and all vehicles are inspected 
-                  to ensure the highest safety standards for our students.
+                  Every driver is verified, every route is monitored, and every trip is tracked. 
+                  Student safety is our highest priority.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="text-center">
+            <Card className="text-center border-0 shadow-lg">
               <CardHeader>
-                <div className="mx-auto mb-4 w-16 h-16 bg-black rounded-full flex items-center justify-center">
-                  <Users className="h-8 w-8 text-white" />
+                <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Heart className="h-8 w-8 text-yellow-600" />
                 </div>
                 <CardTitle>Student-Centric</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600">
-                  Our platform is designed with students in mind, offering 
-                  affordable pricing and flexible scheduling options.
+                  We understand student needs because we've been there. Affordable pricing, 
+                  flexible schedules, and student-friendly policies.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="text-center">
+            <Card className="text-center border-0 shadow-lg">
               <CardHeader>
-                <div className="mx-auto mb-4 w-16 h-16 bg-black rounded-full flex items-center justify-center">
-                  <Target className="h-8 w-8 text-white" />
+                <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Users className="h-8 w-8 text-purple-600" />
                 </div>
-                <CardTitle>Reliability</CardTitle>
+                <CardTitle>Community Building</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600">
-                  We're committed to providing dependable transportation 
-                  services that students can count on for their academic journey.
+                  More than transportation, we're building connections. Students helping students, 
+                  creating lasting relationships and networks.
                 </p>
               </CardContent>
             </Card>
@@ -175,127 +162,120 @@ const About = () => {
         </div>
       </section>
 
-      {/* CEO Letter Modal */}
-      <Dialog open={showCEOLetter} onOpenChange={setShowCEOLetter}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-center">Letter from the CEO</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-6">
-            <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
-              <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
-                <Users className="h-8 w-8 text-gray-400" />
-              </div>
-              <div>
-                <h3 className="font-bold text-lg">Adebayo Ogunlana</h3>
-                <p className="text-gray-600">Chief Executive Officer</p>
-              </div>
-            </div>
-            
-            <div className="prose max-w-none">
-              <Quote className="h-8 w-8 text-gray-400 mb-4" />
-              <p className="text-lg leading-relaxed mb-4">
-                Dear Students and Partners,
-              </p>
-              <p className="mb-4">
-                When I founded Uniride in 2023, I had a simple yet powerful vision: to ensure that no 
-                Nigerian student's educational journey would be hindered by transportation challenges. 
-                Having experienced firsthand the difficulties of traveling between universities and home 
-                during my own academic years, I understood the critical need for a reliable, safe, and 
-                affordable transportation solution.
-              </p>
-              <p className="mb-4">
-                Today, Uniride has grown beyond my initial dreams. We've successfully connected thousands 
-                of students with verified transportation providers, ensuring safe journeys across Nigeria. 
-                Our platform has not only solved transportation challenges but has also created economic 
-                opportunities for drivers and transportation companies in our network.
-              </p>
-              <p className="mb-4">
-                What sets us apart is our unwavering commitment to student safety and affordability. 
-                Every driver in our network undergoes thorough background checks, and every vehicle is 
-                regularly inspected. We've built a community where students can travel with confidence, 
-                knowing they're in safe hands.
-              </p>
-              <p className="mb-4">
-                As we look to the future, our mission remains clear: to expand our reach to every university 
-                in Nigeria and eventually across Africa. We're not just building a transportation platform; 
-                we're building bridges that connect students to their dreams and aspirations.
-              </p>
-              <p className="mb-4">
-                Thank you for trusting Uniride with your transportation needs. Together, we're making 
-                education more accessible for every Nigerian student.
-              </p>
-              <p className="font-semibold">
-                Safe travels,<br />
-                Adebayo Ogunlana<br />
-                CEO, Uniride
-              </p>
-            </div>
+      {/* Leadership */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Leadership</h2>
+            <p className="text-xl text-gray-600">Meet the visionary behind Uniride</p>
           </div>
-        </DialogContent>
-      </Dialog>
 
-      {/* Director Letter Modal */}
-      <Dialog open={showDirectorLetter} onOpenChange={setShowDirectorLetter}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-center">Letter from the Director</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-6">
-            <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
-              <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
-                <Users className="h-8 w-8 text-gray-400" />
-              </div>
-              <div>
-                <h3 className="font-bold text-lg">Dr. Funmi Adebayo</h3>
-                <p className="text-gray-600">Director of Operations</p>
-              </div>
+          <div className="max-w-2xl mx-auto">
+            <Card className="border-0 shadow-xl">
+              <CardContent className="p-8">
+                <div className="text-center">
+                  <div className="w-32 h-32 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <span className="text-4xl font-bold text-white">AD</span>
+                  </div>
+                  
+                  <h3 className="text-2xl font-bold mb-2">Adebayo Dotun</h3>
+                  <Badge className="mb-4">Founder & CEO</Badge>
+                  
+                  <div className="space-y-4 text-gray-600">
+                    <p>
+                      Adebayo is a visionary entrepreneur and technology enthusiast with a passion 
+                      for solving real-world problems through innovative digital solutions. As a 
+                      former university student who experienced firsthand the challenges of campus 
+                      transportation in Nigeria, he founded Uniride with a mission to transform 
+                      how students travel.
+                    </p>
+                    
+                    <p>
+                      With a background in technology and a deep understanding of the Nigerian 
+                      educational landscape, Adebayo brings together technical expertise and 
+                      student advocacy to drive Uniride's growth and impact across the country.
+                    </p>
+                    
+                    <p>
+                      Under his leadership, Uniride has grown from a simple idea to a trusted 
+                      platform serving thousands of students across multiple universities, 
+                      always maintaining the core values of safety, affordability, and 
+                      community building.
+                    </p>
+                  </div>
+
+                  <div className="mt-6 flex justify-center gap-4">
+                    <Badge variant="secondary">Technology Innovation</Badge>
+                    <Badge variant="secondary">Student Advocacy</Badge>
+                    <Badge variant="secondary">Community Building</Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Statistics */}
+      <section className="py-20 bg-black text-white">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Our Impact in Numbers</h2>
+            <p className="text-xl text-gray-300">The difference we're making in the Nigerian student community</p>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div className="text-center">
+              <div className="text-4xl md:text-5xl font-bold mb-2">10,000+</div>
+              <div className="text-gray-300">Students Served</div>
             </div>
-            
-            <div className="prose max-w-none">
-              <Quote className="h-8 w-8 text-gray-400 mb-4" />
-              <p className="text-lg leading-relaxed mb-4">
-                Dear Students, Parents, and Educational Community,
-              </p>
-              <p className="mb-4">
-                As someone who has dedicated over 20 years to Nigerian higher education, I've witnessed 
-                countless talented students struggle with transportation challenges that threatened to 
-                derail their academic dreams. It's this experience that drew me to Uniride's mission 
-                and convinced me to join this revolutionary platform.
-              </p>
-              <p className="mb-4">
-                During my tenure as Vice-Chancellor at Lagos State University, I saw brilliant students 
-                from rural areas arrive late to crucial exams, miss important lectures, or even consider 
-                dropping out because of unreliable transportation. These experiences broke my heart and 
-                fueled my passion for finding sustainable solutions.
-              </p>
-              <p className="mb-4">
-                Uniride represents more than just a transportation service; it's an enabler of dreams. 
-                Our platform ensures that a student from Sokoto can pursue engineering at the University 
-                of Lagos without worrying about how to get home for holidays. It guarantees that a young 
-                woman from Bayelsa can attend medical school in Ibadan with the confidence that safe, 
-                reliable transportation is always available.
-              </p>
-              <p className="mb-4">
-                What I'm most proud of is how we've maintained the highest safety standards while keeping 
-                our services affordable. Every safety protocol we've implemented comes from understanding 
-                that we're not just transporting passengers – we're carrying the hopes and dreams of 
-                families who have invested everything in their children's education.
-              </p>
-              <p className="mb-4">
-                To our student users: your academic success is our priority. To parents: your children's 
-                safety is our responsibility. To university administrators: we're your partners in 
-                ensuring no student's potential is limited by geography.
-              </p>
-              <p className="font-semibold">
-                With warm regards,<br />
-                Dr. Funmi Adebayo<br />
-                Director of Operations, Uniride
-              </p>
+            <div className="text-center">
+              <div className="text-4xl md:text-5xl font-bold mb-2">50+</div>
+              <div className="text-gray-300">Universities Connected</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl md:text-5xl font-bold mb-2">25,000+</div>
+              <div className="text-gray-300">Safe Trips Completed</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl md:text-5xl font-bold mb-2">99%</div>
+              <div className="text-gray-300">Student Satisfaction</div>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      </section>
+
+      {/* Join Our Mission */}
+      <section className="py-20">
+        <div className="max-w-7xl mx-auto px-6 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-6">Join Our Mission</h2>
+          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+            Whether you're a student looking for reliable transportation, a driver wanting to help 
+            fellow students, or a partner interested in supporting student mobility, there's a place 
+            for you in the Uniride community.
+          </p>
+          
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Card className="p-6 border-0 shadow-lg hover:shadow-xl transition-shadow">
+              <CardContent className="text-center">
+                <Users className="h-12 w-12 text-blue-600 mx-auto mb-4" />
+                <h3 className="text-xl font-bold mb-2">For Students</h3>
+                <p className="text-gray-600 mb-4">Join thousands of students already using Uniride</p>
+                <Badge className="bg-blue-600">Sign Up Today</Badge>
+              </CardContent>
+            </Card>
+
+            <Card className="p-6 border-0 shadow-lg hover:shadow-xl transition-shadow">
+              <CardContent className="text-center">
+                <Award className="h-12 w-12 text-green-600 mx-auto mb-4" />
+                <h3 className="text-xl font-bold mb-2">For Drivers</h3>
+                <p className="text-gray-600 mb-4">Earn income while helping fellow students</p>
+                <Badge className="bg-green-600">Start Driving</Badge>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
 
       {/* Footer */}
       <footer className="bg-white py-12">

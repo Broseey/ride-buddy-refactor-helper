@@ -1,253 +1,495 @@
 
 import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Handshake, Building, Users, TrendingUp, Mail, Phone } from "lucide-react";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Building2, Users, TrendingUp, Shield, CheckCircle, Mail, Phone, Globe, Car, Route, Award } from "lucide-react";
 import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+const partnerFormSchema = z.object({
+  company_name: z.string().min(2, "Company name must be at least 2 characters"),
+  contact_email: z.string().email("Invalid email address"),
+  contact_phone: z.string().min(10, "Phone number must be at least 10 digits"),
+  website_url: z.string().url("Invalid website URL").optional().or(z.literal("")),
+  description: z.string().min(50, "Description must be at least 50 characters"),
+  vehicle_count: z.string().min(1, "Please specify number of vehicles"),
+  service_areas: z.string().min(10, "Please specify your service areas"),
+});
+
+type PartnerFormValues = z.infer<typeof partnerFormSchema>;
+
 const Partner = () => {
-  const [formData, setFormData] = useState({
-    companyName: "",
-    contactPerson: "",
-    email: "",
-    phone: "",
-    partnershipType: "",
-    message: ""
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const form = useForm<PartnerFormValues>({
+    resolver: zodResolver(partnerFormSchema),
+    defaultValues: {
+      company_name: "",
+      contact_email: "",
+      contact_phone: "",
+      website_url: "",
+      description: "",
+      vehicle_count: "",
+      service_areas: "",
+    },
   });
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
+  const onSubmit = async (values: PartnerFormValues) => {
+    setIsSubmitting(true);
+    try {
+      const { error } = await supabase
+        .from('ride_companies')
+        .insert({
+          company_name: values.company_name,
+          contact_email: values.contact_email,
+          contact_phone: values.contact_phone,
+          website_url: values.website_url || null,
+          description: values.description,
+          vehicle_count: parseInt(values.vehicle_count),
+          service_areas: values.service_areas,
+          status: 'pending',
+        });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Create mailto link with form data
-    const subject = `Partnership Inquiry from ${formData.companyName}`;
-    const body = `
-Company Name: ${formData.companyName}
-Contact Person: ${formData.contactPerson}
-Email: ${formData.email}
-Phone: ${formData.phone}
-Partnership Type: ${formData.partnershipType}
+      if (error) throw error;
 
-Message:
-${formData.message}
-    `;
-    
-    const mailtoLink = `mailto:partner@uniride.ng?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    window.location.href = mailtoLink;
-    
-    toast.success("Email client opened with your partnership inquiry!");
+      setIsSubmitted(true);
+      toast.success("Partnership application submitted successfully!");
+      form.reset();
+    } catch (error) {
+      console.error('Error submitting partnership application:', error);
+      toast.error("Failed to submit application. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       
-      <div className="container mx-auto px-4 py-12">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Partner with Uniride</h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Join us in revolutionizing student transportation across Nigeria. Together, we can create better mobility solutions for universities and students.
+      {/* Hero Section */}
+      <section className="bg-black text-white py-20">
+        <div className="max-w-7xl mx-auto px-6 text-center">
+          <div className="flex justify-center mb-6">
+            <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center">
+              <Building2 className="h-10 w-10 text-black" />
+            </div>
+          </div>
+          <h1 className="text-4xl md:text-5xl font-bold mb-6">
+            Partner with Uniride
+          </h1>
+          <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+            Join our network of trusted transportation companies and help us provide safe, 
+            reliable rides for students across Nigeria. Together, we can revolutionize campus transportation.
           </p>
         </div>
+      </section>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Partnership Benefits */}
-          <div className="space-y-8">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Handshake className="h-6 w-6 text-blue-600" />
-                  Partnership Opportunities
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <Building className="h-5 w-5 text-green-600 mt-1" />
-                  <div>
-                    <h4 className="font-semibold">University Partnerships</h4>
-                    <p className="text-sm text-gray-600">Collaborate with us to provide official transportation services for your institution.</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start gap-3">
-                  <Users className="h-5 w-5 text-blue-600 mt-1" />
-                  <div>
-                    <h4 className="font-semibold">Corporate Solutions</h4>
-                    <p className="text-sm text-gray-600">Provide employee transportation solutions with our corporate packages.</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start gap-3">
-                  <TrendingUp className="h-5 w-5 text-purple-600 mt-1" />
-                  <div>
-                    <h4 className="font-semibold">Technology Integration</h4>
-                    <p className="text-sm text-gray-600">Integrate our API and services into your existing platforms.</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+      {/* Benefits Section */}
+      <section className="py-20">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Why Partner with Us?</h2>
+            <p className="text-xl text-gray-600">Unlock new opportunities for your transportation business</p>
+          </div>
 
-            <Card>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <Card className="text-center border-0 shadow-lg hover:shadow-xl transition-shadow">
               <CardHeader>
-                <CardTitle>Why Partner with Us?</CardTitle>
+                <div className="mx-auto mb-4 w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                  <Users className="h-8 w-8 text-blue-600" />
+                </div>
+                <CardTitle>Access to Students</CardTitle>
               </CardHeader>
               <CardContent>
-                <ul className="space-y-3 text-sm">
-                  <li className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-600 rounded-full"></div>
-                    <span>Access to 10,000+ verified students across Nigeria</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                    <span>Proven track record with 50+ universities</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-purple-600 rounded-full"></div>
-                    <span>99% safety rating and verified driver network</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-orange-600 rounded-full"></div>
-                    <span>Comprehensive insurance and support services</span>
-                  </li>
-                </ul>
+                <p className="text-gray-600">
+                  Connect with thousands of students who need reliable transportation 
+                  between universities and cities.
+                </p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="text-center border-0 shadow-lg hover:shadow-xl transition-shadow">
               <CardHeader>
-                <CardTitle>Contact Information</CardTitle>
+                <div className="mx-auto mb-4 w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                  <TrendingUp className="h-8 w-8 text-green-600" />
+                </div>
+                <CardTitle>Increase Revenue</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <Mail className="h-5 w-5 text-gray-600" />
-                  <div>
-                    <p className="font-medium">Partnership Email</p>
-                    <p className="text-sm text-gray-600">partner@uniride.ng</p>
-                  </div>
+              <CardContent>
+                <p className="text-gray-600">
+                  Optimize your vehicle utilization and increase revenue with 
+                  our demand-driven booking platform.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="text-center border-0 shadow-lg hover:shadow-xl transition-shadow">
+              <CardHeader>
+                <div className="mx-auto mb-4 w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center">
+                  <Shield className="h-8 w-8 text-purple-600" />
                 </div>
-                
-                <div className="flex items-center gap-3">
-                  <Phone className="h-5 w-5 text-gray-600" />
-                  <div>
-                    <p className="font-medium">Partnership Hotline</p>
-                    <p className="text-sm text-gray-600">+234 (0) 800 PARTNER</p>
-                  </div>
+                <CardTitle>Verified Network</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600">
+                  Join a verified network of transportation providers with 
+                  background checks and quality standards.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="text-center border-0 shadow-lg hover:shadow-xl transition-shadow">
+              <CardHeader>
+                <div className="mx-auto mb-4 w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center">
+                  <Award className="h-8 w-8 text-yellow-600" />
                 </div>
+                <CardTitle>Brand Visibility</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600">
+                  Increase your brand visibility among university students 
+                  and build lasting customer relationships.
+                </p>
               </CardContent>
             </Card>
           </div>
-
-          {/* Partnership Form */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Start a Partnership</CardTitle>
-              <p className="text-gray-600">Tell us about your organization and how we can work together</p>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <Label htmlFor="companyName">Company/Organization Name *</Label>
-                  <Input
-                    id="companyName"
-                    value={formData.companyName}
-                    onChange={(e) => handleInputChange("companyName", e.target.value)}
-                    placeholder="Enter your organization name"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="contactPerson">Contact Person *</Label>
-                  <Input
-                    id="contactPerson"
-                    value={formData.contactPerson}
-                    onChange={(e) => handleInputChange("contactPerson", e.target.value)}
-                    placeholder="Enter contact person name"
-                    required
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="email">Email *</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => handleInputChange("email", e.target.value)}
-                      placeholder="your@email.com"
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="phone">Phone Number *</Label>
-                    <Input
-                      id="phone"
-                      value={formData.phone}
-                      onChange={(e) => handleInputChange("phone", e.target.value)}
-                      placeholder="+234 xxx xxx xxxx"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="partnershipType">Partnership Type *</Label>
-                  <Select value={formData.partnershipType} onValueChange={(value) => handleInputChange("partnershipType", value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select partnership type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="university">University Partnership</SelectItem>
-                      <SelectItem value="corporate">Corporate Solutions</SelectItem>
-                      <SelectItem value="technology">Technology Integration</SelectItem>
-                      <SelectItem value="investor">Investment Opportunity</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="message">Message *</Label>
-                  <Textarea
-                    id="message"
-                    value={formData.message}
-                    onChange={(e) => handleInputChange("message", e.target.value)}
-                    placeholder="Tell us about your partnership goals and how we can work together..."
-                    rows={5}
-                    required
-                  />
-                </div>
-
-                <Button 
-                  type="submit" 
-                  className="w-full bg-black hover:bg-gray-900"
-                  disabled={!formData.companyName || !formData.contactPerson || !formData.email || !formData.phone || !formData.partnershipType || !formData.message}
-                >
-                  Send Partnership Inquiry
-                </Button>
-
-                <p className="text-xs text-gray-500 text-center">
-                  We'll respond to your inquiry within 24-48 hours
-                </p>
-              </form>
-            </CardContent>
-          </Card>
         </div>
-      </div>
+      </section>
 
-      <Footer />
+      {/* Partnership Benefits Details */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+              <h2 className="text-3xl font-bold mb-6">What You Get as Our Partner</h2>
+              <div className="space-y-6">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Car className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold mb-2">Fleet Management Support</h3>
+                    <p className="text-gray-600">Advanced tools to manage your fleet, track performance, and optimize routes.</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Route className="h-6 w-6 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold mb-2">Route Optimization</h3>
+                    <p className="text-gray-600">Smart route planning to maximize efficiency and minimize empty trips.</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <TrendingUp className="h-6 w-6 text-purple-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold mb-2">Performance Analytics</h3>
+                    <p className="text-gray-600">Detailed insights into your business performance and growth opportunities.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-gray-50 p-8 rounded-xl">
+              <h3 className="text-2xl font-bold mb-6">Partnership Requirements</h3>
+              <ul className="space-y-3">
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  <span>Valid business registration</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  <span>Minimum 3 vehicles in fleet</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  <span>Valid insurance coverage</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  <span>Verified driver background checks</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  <span>Commitment to safety standards</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  <span>Service area coverage plan</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Partnership Process */}
+      <section className="py-20">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Partnership Process</h2>
+            <p className="text-xl text-gray-600">Simple steps to become a Uniride partner</p>
+          </div>
+
+          <div className="grid md:grid-cols-4 gap-8">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-black text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-6">
+                1
+              </div>
+              <h3 className="text-xl font-bold mb-4">Apply</h3>
+              <p className="text-gray-600">
+                Submit your partnership application with company details and 
+                required documentation.
+              </p>
+            </div>
+
+            <div className="text-center">
+              <div className="w-16 h-16 bg-black text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-6">
+                2
+              </div>
+              <h3 className="text-xl font-bold mb-4">Review</h3>
+              <p className="text-gray-600">
+                Our team reviews your application and conducts necessary 
+                background checks and verifications.
+              </p>
+            </div>
+
+            <div className="text-center">
+              <div className="w-16 h-16 bg-black text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-6">
+                3
+              </div>
+              <h3 className="text-xl font-bold mb-4">Onboarding</h3>
+              <p className="text-gray-600">
+                Complete the onboarding process including training, 
+                system setup, and integration testing.
+              </p>
+            </div>
+
+            <div className="text-center">
+              <div className="w-16 h-16 bg-black text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-6">
+                4
+              </div>
+              <h3 className="text-xl font-bold mb-4">Launch</h3>
+              <p className="text-gray-600">
+                Go live on our platform and start receiving bookings 
+                from students immediately.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Application Form */}
+      <section className="py-20 bg-gray-50">
+        <div className="max-w-4xl mx-auto px-6">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Apply for Partnership</h2>
+            <p className="text-xl text-gray-600">Fill out the form below to start your partnership with Uniride</p>
+          </div>
+
+          {isSubmitted ? (
+            <Card className="text-center py-12 border-0 shadow-xl">
+              <CardContent>
+                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <CheckCircle className="h-10 w-10 text-green-600" />
+                </div>
+                <h3 className="text-2xl font-bold mb-4">Application Submitted Successfully!</h3>
+                <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+                  Thank you for your interest in partnering with Uniride. We'll review your 
+                  application and get back to you within 3-5 business days with next steps.
+                </p>
+                <div className="space-y-3 text-sm text-gray-500 mb-6">
+                  <p>📧 You'll receive a confirmation email shortly</p>
+                  <p>📞 Our team may contact you for additional information</p>
+                  <p>⏱️ Average review time: 3-5 business days</p>
+                </div>
+                <Button 
+                  onClick={() => setIsSubmitted(false)}
+                  className="bg-black text-white hover:bg-gray-800"
+                >
+                  Submit Another Application
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="border-0 shadow-xl">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Building2 className="h-5 w-5" />
+                  Company Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <FormField
+                        control={form.control}
+                        name="company_name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center gap-2">
+                              <Building2 className="h-4 w-4" />
+                              Company Name *
+                            </FormLabel>
+                            <FormControl>
+                              <Input placeholder="Enter your company name" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="contact_email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center gap-2">
+                              <Mail className="h-4 w-4" />
+                              Contact Email *
+                            </FormLabel>
+                            <FormControl>
+                              <Input type="email" placeholder="contact@company.com" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <FormField
+                        control={form.control}
+                        name="contact_phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center gap-2">
+                              <Phone className="h-4 w-4" />
+                              Contact Phone *
+                            </FormLabel>
+                            <FormControl>
+                              <Input placeholder="+234 xxx xxx xxxx" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="website_url"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center gap-2">
+                              <Globe className="h-4 w-4" />
+                              Website URL (Optional)
+                            </FormLabel>
+                            <FormControl>
+                              <Input placeholder="https://www.company.com" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <FormField
+                        control={form.control}
+                        name="vehicle_count"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center gap-2">
+                              <Car className="h-4 w-4" />
+                              Number of Vehicles *
+                            </FormLabel>
+                            <FormControl>
+                              <Input type="number" placeholder="e.g., 5" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="service_areas"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center gap-2">
+                              <Route className="h-4 w-4" />
+                              Service Areas *
+                            </FormLabel>
+                            <FormControl>
+                              <Input placeholder="e.g., Lagos, Ibadan, Abeokuta" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name="description"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Company Description *</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="Tell us about your company, fleet size, service areas, experience in transportation, safety measures, and why you want to partner with Uniride..."
+                              className="min-h-[120px]"
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <Button 
+                      type="submit" 
+                      className="w-full bg-black text-white hover:bg-gray-800 py-3"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <div className="flex items-center gap-2">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          Submitting Application...
+                        </div>
+                      ) : (
+                        "Submit Partnership Application"
+                      )}
+                    </Button>
+                  </form>
+                </Form>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-white py-12">
+        <div className="max-w-7xl mx-auto px-6 text-center">
+          <p className="text-gray-500">© 2025 Uniride. All rights reserved.</p>
+        </div>
+      </footer>
     </div>
   );
 };

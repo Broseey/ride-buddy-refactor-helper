@@ -23,8 +23,7 @@ const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
     return <Navigate to="/admin-signin" state={{ from: location }} replace />;
   }
 
-  // Check if user has admin profile OR if user email contains 'admin'
-  if (!adminProfile && !user.email?.includes('admin')) {
+  if (!adminProfile || !adminProfile.is_active) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="max-w-md w-full bg-white p-8 rounded-lg shadow-lg text-center">

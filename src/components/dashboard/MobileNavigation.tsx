@@ -1,66 +1,66 @@
 
 import React from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { Home, Search, User, Calendar } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
+import { Home, Car, User, List } from "lucide-react";
 
 interface MobileNavigationProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
 }
 
-const MobileNavigation = ({ activeTab, setActiveTab }: MobileNavigationProps) => {
-  const navigate = useNavigate();
+const MobileNavigation: React.FC<MobileNavigationProps> = ({ activeTab, setActiveTab }) => {
   const location = useLocation();
-
-  const handleNavigation = (tab: string, path: string) => {
-    setActiveTab(tab);
-    navigate(path);
+  
+  const isActive = (path: string) => {
+    return location.pathname === path;
   };
-
-  const isActive = (path: string) => location.pathname === path;
 
   return (
     <div className="bg-white border-t border-gray-200 px-4 py-2">
-      <div className="flex justify-around">
-        <button
-          onClick={() => handleNavigation("home", "/dashboard")}
-          className={`flex flex-col items-center py-2 px-3 ${
-            isActive("/dashboard") ? "text-black" : "text-gray-500"
+      <div className="flex justify-around items-center">
+        <Link 
+          to="/dashboard" 
+          className={`flex flex-col items-center py-2 px-3 rounded-lg transition-colors ${
+            isActive('/dashboard') ? 'bg-black text-white' : 'text-gray-600 hover:text-black'
           }`}
+          onClick={() => setActiveTab('home')}
         >
-          <Home className="h-5 w-5" />
-          <span className="text-xs mt-1">Home</span>
-        </button>
+          <Home className="h-5 w-5 mb-1" />
+          <span className="text-xs">Home</span>
+        </Link>
         
-        <button
-          onClick={() => handleNavigation("available", "/available")}
-          className={`flex flex-col items-center py-2 px-3 ${
-            isActive("/available") ? "text-black" : "text-gray-500"
+        <Link 
+          to="/available" 
+          className={`flex flex-col items-center py-2 px-3 rounded-lg transition-colors ${
+            isActive('/available') ? 'bg-black text-white' : 'text-gray-600 hover:text-black'
           }`}
+          onClick={() => setActiveTab('available')}
         >
-          <Search className="h-5 w-5" />
-          <span className="text-xs mt-1">Available</span>
-        </button>
+          <List className="h-5 w-5 mb-1" />
+          <span className="text-xs">Available</span>
+        </Link>
         
-        <button
-          onClick={() => handleNavigation("schedule", "/schedule")}
-          className={`flex flex-col items-center py-2 px-3 ${
-            isActive("/schedule") ? "text-black" : "text-gray-500"
+        <Link 
+          to="/schedule" 
+          className={`flex flex-col items-center py-2 px-3 rounded-lg transition-colors ${
+            isActive('/schedule') ? 'bg-black text-white' : 'text-gray-600 hover:text-black'
           }`}
+          onClick={() => setActiveTab('book')}
         >
-          <Calendar className="h-5 w-5" />
-          <span className="text-xs mt-1">Book</span>
-        </button>
+          <Car className="h-5 w-5 mb-1" />
+          <span className="text-xs">Book</span>
+        </Link>
         
-        <button
-          onClick={() => handleNavigation("profile", "/profile")}
-          className={`flex flex-col items-center py-2 px-3 ${
-            isActive("/profile") ? "text-black" : "text-gray-500"
+        <Link 
+          to="/profile" 
+          className={`flex flex-col items-center py-2 px-3 rounded-lg transition-colors ${
+            isActive('/profile') ? 'bg-black text-white' : 'text-gray-600 hover:text-black'
           }`}
+          onClick={() => setActiveTab('profile')}
         >
-          <User className="h-5 w-5" />
-          <span className="text-xs mt-1">Profile</span>
-        </button>
+          <User className="h-5 w-5 mb-1" />
+          <span className="text-xs">Profile</span>
+        </Link>
       </div>
     </div>
   );

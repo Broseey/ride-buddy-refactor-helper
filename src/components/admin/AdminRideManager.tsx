@@ -6,34 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, MapPin, Calendar, Clock, Users, DollarSign } from "lucide-react";
+import { Plus, MapPin, Calendar, Clock, Users, DollarSign, Car } from "lucide-react";
 import { toast } from "sonner";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-// Nigerian locations data
-const nigerianLocations = {
-  universities: [
-    "Babcock University, Ilishan-Remo",
-    "Afe Babalola University, Ado-Ekiti",
-    "Redeemer's University, Ede",
-    "Bowen University, Iwo",
-    "Covenant University, Ota",
-    "Lead City University, Ibadan",
-    "Pan-Atlantic University, Lagos",
-    "Landmark University, Omu-Aran",
-    "American University of Nigeria, Yola"
-  ],
-  states: [
-    "Abia", "Adamawa", "Akwa Ibom", "Anambra", "Bauchi", "Bayelsa", "Benue", 
-    "Borno", "Cross River", "Delta", "Ebonyi", "Edo", "Ekiti", "Enugu", 
-    "FCT - Abuja", "Gombe", "Imo", "Jigawa", "Kaduna", "Kano", "Katsina", 
-    "Kebbi", "Kogi", "Kwara", "Lagos", "Nasarawa", "Niger", "Ogun", "Ondo", 
-    "Osun", "Oyo", "Plateau", "Rivers", "Sokoto", "Taraba", "Yobe", "Zamfara"
-  ]
-};
-
-const CreateRide = () => {
+const AdminRideManager = () => {
   const [formData, setFormData] = useState({
     fromLocation: '',
     toLocation: '',
@@ -46,6 +24,28 @@ const CreateRide = () => {
   });
 
   const queryClient = useQueryClient();
+
+  // Fetch available locations
+  const { data: locations } = useQuery({
+    queryKey: ['admin-locations'],
+    queryFn: async () => {
+      const [statesResult, universitiesResult] = await Promise.all([
+        supabase.from('nigerian_states').select('*').eq('is_active', true).order('name'),
+        supabase.from('nigerian_universities').select('*').eq('is_active', true).order('name')
+      ]);
+      
+      const allLocations = [
+        ...(statesResult.data || []).map(s => s.name),
+        ...(universitiesResult.data || []).map(u => u.name)
+      ];
+      
+      return {
+        states: statesResult.data || [],
+        universities: universitiesResult.data || [],
+        allLocations
+      };
+    },
+  });
 
   const createRideMutation = useMutation({
     mutationFn: async (rideData: any) => {
@@ -61,7 +61,7 @@ const CreateRide = () => {
           departure_time: rideData.departureTime,
           seats_requested: parseInt(rideData.totalSeats),
           price: parseFloat(rideData.price),
-          booking_type: 'admin_created',
+          booking_type: 'available',
           status: 'available',
           user_id: userData.user?.id,
           vehicle_type: rideData.vehicleType,
@@ -74,8 +74,7 @@ const CreateRide = () => {
       return data;
     },
     onSuccess: () => {
-      toast.success('Ride created successfully!');
-      queryClient.invalidateQueries({ queryKey: ['admin-rides'] });
+      toast.success('Available ride created successfully!');
       queryClient.invalidateQueries({ queryKey: ['available-rides'] });
       setFormData({
         fromLocation: '',
@@ -113,14 +112,12 @@ const CreateRide = () => {
     }));
   };
 
-  const allLocations = [...nigerianLocations.universities, ...nigerianLocations.states];
-
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Plus className="h-5 w-5" />
-          Create New Ride
+          Create Available Ride
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -128,112 +125,91 @@ const CreateRide = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="fromLocation">From Location *</Label>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Select
-                  value={formData.fromLocation}
-                  onValueChange={(value) => handleInputChange('fromLocation', value)}
-                >
-                  <SelectTrigger className="pl-10">
-                    <SelectValue placeholder="Select departure location" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {allLocations.map((location) => (
-                      <SelectItem key={location} value={location}>{location}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <Select
+                value={formData.fromLocation}
+                onValueChange={(value) => handleInputChange('fromLocation', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select departure location" />
+                </SelectTrigger>
+                <SelectContent>
+                  {locations?.allLocations.map((location) => (
+                    <SelectItem key={location} value={location}>{location}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="toLocation">To Location *</Label>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Select
-                  value={formData.toLocation}
-                  onValueChange={(value) => handleInputChange('toLocation', value)}
-                >
-                  <SelectTrigger className="pl-10">
-                    <SelectValue placeholder="Select destination location" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {allLocations.map((location) => (
-                      <SelectItem key={location} value={location}>{location}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <Select
+                value={formData.toLocation}
+                onValueChange={(value) => handleInputChange('toLocation', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select destination location" />
+                </SelectTrigger>
+                <SelectContent>
+                  {locations?.allLocations.map((location) => (
+                    <SelectItem key={location} value={location}>{location}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="departureDate">Departure Date *</Label>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  id="departureDate"
-                  type="date"
-                  value={formData.departureDate}
-                  onChange={(e) => handleInputChange('departureDate', e.target.value)}
-                  className="pl-10"
-                  required
-                />
-              </div>
+              <Input
+                id="departureDate"
+                type="date"
+                value={formData.departureDate}
+                onChange={(e) => handleInputChange('departureDate', e.target.value)}
+                min={new Date().toISOString().split('T')[0]}
+                required
+              />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="departureTime">Departure Time *</Label>
-              <div className="relative">
-                <Clock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  id="departureTime"
-                  type="time"
-                  value={formData.departureTime}
-                  onChange={(e) => handleInputChange('departureTime', e.target.value)}
-                  className="pl-10"
-                  required
-                />
-              </div>
+              <Input
+                id="departureTime"
+                type="time"
+                value={formData.departureTime}
+                onChange={(e) => handleInputChange('departureTime', e.target.value)}
+                required
+              />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="totalSeats">Total Seats *</Label>
-              <div className="relative">
-                <Users className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  id="totalSeats"
-                  type="number"
-                  min="1"
-                  max="20"
-                  placeholder="6"
-                  value={formData.totalSeats}
-                  onChange={(e) => handleInputChange('totalSeats', e.target.value)}
-                  className="pl-10"
-                  required
-                />
-              </div>
+              <Input
+                id="totalSeats"
+                type="number"
+                min="1"
+                max="20"
+                placeholder="6"
+                value={formData.totalSeats}
+                onChange={(e) => handleInputChange('totalSeats', e.target.value)}
+                required
+              />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="price">Price per Seat (₦) *</Label>
-              <div className="relative">
-                <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  id="price"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="1200"
-                  value={formData.price}
-                  onChange={(e) => handleInputChange('price', e.target.value)}
-                  className="pl-10"
-                  required
-                />
-              </div>
+              <Input
+                id="price"
+                type="number"
+                min="0"
+                step="100"
+                placeholder="1200"
+                value={formData.price}
+                onChange={(e) => handleInputChange('price', e.target.value)}
+                required
+              />
             </div>
 
             <div className="space-y-2">
@@ -270,7 +246,7 @@ const CreateRide = () => {
             className="w-full"
             disabled={createRideMutation.isPending}
           >
-            {createRideMutation.isPending ? 'Creating Ride...' : 'Create Ride'}
+            {createRideMutation.isPending ? 'Creating Ride...' : 'Create Available Ride'}
           </Button>
         </form>
       </CardContent>
@@ -278,4 +254,4 @@ const CreateRide = () => {
   );
 };
 
-export default CreateRide;
+export default AdminRideManager;
