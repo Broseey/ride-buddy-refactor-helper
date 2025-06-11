@@ -43,7 +43,7 @@ const Index = () => {
                 </span>
               </div>
 
-              <h1 className="text-4xl md:text-6xl font-bold text-gray-900 leading-tight">
+              <h1 className="text-4xl md:text-6xl font-extrabold text-gray-900 leading-tight">
                 Campus Rides
                 <span className="block text-black">Made Simple</span>
               </h1>
