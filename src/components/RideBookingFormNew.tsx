@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -5,8 +6,7 @@ import * as z from "zod";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { MapPin, Calendar, Clock, Car, Users, ArrowUpRight, ArrowDownLeft, Map } from "lucide-react";
+import { MapPin, Calendar, Clock, Users, ArrowUpRight, ArrowDownLeft, Map } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
@@ -28,26 +28,22 @@ import {
 import RoutePreview from "@/components/RoutePreview";
 import LocationSearchInput from "@/components/LocationSearchInput";
 import MapLocationPicker from "@/components/MapLocationPicker";
+import PaystackPayment from "@/components/PaystackPayment";
+import VehicleOptions from "@/components/VehicleOptions";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 // Type definitions
-type BookingStep = 'location' | 'date' | 'vehicle';
+type BookingStep = 'location' | 'date' | 'vehicle' | 'payment';
 type BookingType = 'join' | 'full';
 
 // Nigerian locations data
 const nigerianLocations = {
   universities: [
-    "Babcock University, Ilishan-Remo",
-    "Afe Babalola University, Ado-Ekiti",
-    "Redeemer's University, Ede",
-    "Bowen University, Iwo",
-    "Covenant University, Ota",
-    "Lead City University, Ibadan",
-    "Pan-Atlantic University, Lagos",
-    "Landmark University, Omu-Aran",
-    "American University of Nigeria, Yola"
+    "Afe Babalola University, Ado-Ekiti"
   ],
   states: [
     "Abia", "Adamawa", "Akwa Ibom", "Anambra", "Bauchi", "Bayelsa", "Benue", 
@@ -81,10 +77,10 @@ const bookingFormSchema = z.object({
 type BookingFormValues = z.infer<typeof bookingFormSchema>;
 
 const vehicles = [
-  { id: 'sienna', name: 'Sienna', capacity: 6, price: 5000 },
-  { id: 'hiace', name: 'Hiace Bus', capacity: 14, price: 7000 },
-  { id: 'long-bus', name: 'Long Bus', capacity: 18, price: 8000 },
-  { id: 'corolla', name: 'Corolla', capacity: 4, price: 3500 },
+  { id: 'corolla', name: 'Sedan', capacity: 4, base_price: 3500 },
+  { id: 'sienna', name: 'Mini Van', capacity: 6, base_price: 5000 },
+  { id: 'hiace', name: 'Mini Bus', capacity: 14, base_price: 7000 },
+  { id: 'long-bus', name: 'Bus', capacity: 18, base_price: 8000 },
 ];
 
 const RideBookingFormNew = () => {
@@ -94,6 +90,32 @@ const RideBookingFormNew = () => {
   const [bookingType, setBookingType] = useState<BookingType>('join');
   const [showPreview, setShowPreview] = useState(false);
   const [showMapPicker, setShowMapPicker] = useState(false);
+  const [showPayment, setShowPayment] = useState(false);
+  const [calculatedPrice, setCalculatedPrice] = useState(0);
+  const [availableRides, setAvailableRides] = useState<any[]>([]);
+  
+  // Check for available rides
+  const { data: existingRides } = useQuery({
+    queryKey: ['available-rides'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('rides')
+        .select('*')
+        .eq('status', 'confirmed')
+        .gte('departure_date', format(new Date(), 'yyyy-MM-dd'));
+      
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Get admin-configured travel times
+  const { data: availableTimes } = useQuery({
+    queryKey: ['available-times'],
+    queryFn: async () => {
+      return ["08:00", "12:00", "14:00", "18:00"];
+    },
+  });
   
   // Initialize the form with React Hook Form
   const form = useForm<BookingFormValues>({
@@ -116,6 +138,39 @@ const RideBookingFormNew = () => {
   const watchToType = form.watch("toType");
   const watchVehicleId = form.watch("vehicleId");
   const watchMapLocation = form.watch("mapLocation");
+  const watchPassengers = form.watch("passengers");
+  
+  // Calculate price based on route and vehicle
+  useEffect(() => {
+    if (watchVehicleId) {
+      const selectedVehicle = vehicles.find(v => v.id === watchVehicleId);
+      
+      if (selectedVehicle) {
+        let basePrice = selectedVehicle.base_price;
+        
+        if (bookingType === 'full') {
+          // 10% discount for full ride booking
+          basePrice = Math.round(basePrice * 0.9);
+        } else {
+          // Per seat pricing
+          basePrice = Math.round(basePrice / selectedVehicle.capacity) * parseInt(watchPassengers);
+        }
+        
+        setCalculatedPrice(basePrice);
+      }
+    }
+  }, [watchVehicleId, watchPassengers, bookingType]);
+
+  // Check for available rides when route changes
+  useEffect(() => {
+    if (watchFrom && watchTo && existingRides) {
+      const matching = existingRides.filter(ride => 
+        (ride.from_location === watchFrom && ride.to_location === watchTo) ||
+        (ride.from_location === watchTo && ride.to_location === watchFrom)
+      );
+      setAvailableRides(matching);
+    }
+  }, [watchFrom, watchTo, existingRides]);
   
   // Check authentication before allowing booking
   const checkAuthAndProceed = () => {
@@ -152,25 +207,67 @@ const RideBookingFormNew = () => {
   const nextStep = () => {
     if (!checkAuthAndProceed()) return;
     
-    if (currentStep === 'location') setCurrentStep('date');
+    if (currentStep === 'location') {
+      // Check if joining a ride but no available rides
+      if (bookingType === 'join' && availableRides.length === 0) {
+        toast.error("No available rides for this route. Please book the entire ride instead.");
+        setBookingType('full');
+        return;
+      }
+      setCurrentStep('date');
+    }
     else if (currentStep === 'date') setCurrentStep('vehicle');
+    else if (currentStep === 'vehicle') setCurrentStep('payment');
   };
 
   const prevStep = () => {
-    if (currentStep === 'vehicle') setCurrentStep('date');
+    if (currentStep === 'payment') setCurrentStep('vehicle');
+    else if (currentStep === 'vehicle') setCurrentStep('date');
     else if (currentStep === 'date') setCurrentStep('location');
+  };
+
+  // Handle payment success
+  const handlePaymentSuccess = async (reference: string) => {
+    try {
+      const formData = form.getValues();
+      const selectedVehicle = vehicles.find(v => v.id === formData.vehicleId);
+      
+      // Create ride booking
+      const { data: booking, error } = await supabase
+        .from('rides')
+        .insert({
+          user_id: user?.id,
+          from_location: formData.from,
+          to_location: formData.to,
+          departure_date: format(formData.date, 'yyyy-MM-dd'),
+          departure_time: formData.time,
+          seats_requested: bookingType === 'full' ? selectedVehicle?.capacity : parseInt(formData.passengers),
+          booking_type: bookingType,
+          price: calculatedPrice,
+          status: 'confirmed',
+          pickup_location: formData.specificLocation || formData.mapLocation?.address,
+          payment_reference: reference
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast.success("Booking confirmed! Redirecting to dashboard...");
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 2000);
+    } catch (error) {
+      console.error('Error creating booking:', error);
+      toast.error("Error creating booking. Please contact support.");
+    }
   };
 
   // Form submission
   const onSubmit = (data: BookingFormValues) => {
     if (!checkAuthAndProceed()) return;
-    
-    console.log('Booking submitted:', { bookingType, ...data });
-    window.location.href = '/booking-confirmation';
+    setShowPayment(true);
   };
-
-  // Find selected vehicle
-  const selectedVehicle = vehicles.find(v => v.id === watchVehicleId);
 
   // Toggle location type
   const toggleLocationType = (field: "fromType" | "toType", value: "university" | "state") => {
@@ -197,6 +294,25 @@ const RideBookingFormNew = () => {
     form.setValue("specificLocation", "");
   };
 
+  if (showPayment) {
+    const formData = form.getValues();
+    return (
+      <PaystackPayment
+        amount={calculatedPrice}
+        email={user?.email || ""}
+        onSuccess={handlePaymentSuccess}
+        onCancel={() => setShowPayment(false)}
+        rideDetails={{
+          from: formData.from,
+          to: formData.to,
+          date: format(formData.date, 'PPP'),
+          time: formData.time,
+          passengers: bookingType === 'full' ? vehicles.find(v => v.id === formData.vehicleId)?.capacity || 1 : parseInt(formData.passengers)
+        }}
+      />
+    );
+  }
+
   return (
     <>
       <Card className="w-full mx-auto md:mx-0 max-w-lg shadow-lg hover:shadow-xl transition-all duration-300">
@@ -205,7 +321,7 @@ const RideBookingFormNew = () => {
           
           <Tabs value={bookingType} onValueChange={(v) => setBookingType(v as BookingType)} className="mb-6 rounded-[3.5rem]">
             <TabsList className="grid w-full grid-cols-2 rounded-[2rem]">
-              <TabsTrigger value="join" className="data-[state=active]:bg-black data-[state=active]:text-white hover:bg-gray-100 transition-colors rounded-[1.5rem]">Join a Ride</TabsTrigger>
+              <TabsTrigger value="join" className="data-[state=active]:bg-black data-[state=active]:text-white hover:bg-gray-100 transition-colors rounded-[1.5rem]">Book Seat</TabsTrigger>
               <TabsTrigger value="full" className="data-[state=active]:bg-black data-[state=active]:text-white hover:bg-gray-100 transition-colors rounded-[1.5rem]">Book Entire Ride</TabsTrigger>
             </TabsList>
           </Tabs>
@@ -224,11 +340,15 @@ const RideBookingFormNew = () => {
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 ${currentStep === 'vehicle' ? 'bg-black text-white' : 'bg-gray-200'} transition-all duration-300`}>3</div>
                 <span className="text-xs">Vehicle</span>
               </div>
+              <div className={`flex flex-col items-center ${currentStep === 'payment' ? 'text-black' : 'text-gray-400'}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 ${currentStep === 'payment' ? 'bg-black text-white' : 'bg-gray-200'} transition-all duration-300`}>4</div>
+                <span className="text-xs">Payment</span>
+              </div>
             </div>
             <div className="mt-2 h-1 bg-gray-200 rounded-full">
               <div 
                 className="h-full bg-black rounded-full transition-all duration-500" 
-                style={{ width: currentStep === 'location' ? '33.3%' : currentStep === 'date' ? '66.6%' : '100%' }}
+                style={{ width: currentStep === 'location' ? '25%' : currentStep === 'date' ? '50%' : currentStep === 'vehicle' ? '75%' : '100%' }}
               ></div>
             </div>
           </div>
@@ -240,7 +360,7 @@ const RideBookingFormNew = () => {
                   {/* From Location */}
                   <div className="space-y-3">
                     <div className="flex items-center space-x-2">
-                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-campusorange-600">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-orange-600">
                         <ArrowUpRight className="h-4 w-4 text-white" />
                       </div>
                       
@@ -305,20 +425,6 @@ const RideBookingFormNew = () => {
                         />
                       </div>
                     </div>
-                    
-                    {watchFrom && (
-                      <div className="flex justify-end">
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="ghost"
-                          className="h-6 text-xs hover:bg-gray-100 transition-colors"
-                          onClick={() => form.setValue("from", "")}
-                        >
-                          Clear
-                        </Button>
-                      </div>
-                    )}
                   </div>
 
                   {/* To Location */}
@@ -389,23 +495,9 @@ const RideBookingFormNew = () => {
                         />
                       </div>
                     </div>
-                    
-                    {watchTo && (
-                      <div className="flex justify-end">
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="ghost"
-                          className="h-6 text-xs hover:bg-gray-100 transition-colors"
-                          onClick={() => form.setValue("to", "")}
-                        >
-                          Clear
-                        </Button>
-                      </div>
-                    )}
                   </div>
 
-                  {/* Specific Location for "Book Entire Ride" with Map Option */}
+                  {/* Specific Location for "Book Entire Ride" */}
                   {bookingType === 'full' && (watchFrom || watchTo) && (
                     <div className="space-y-3">
                       <FormField
@@ -418,7 +510,7 @@ const RideBookingFormNew = () => {
                               <LocationSearchInput
                                 value={field.value || ''}
                                 onChange={field.onChange}
-                                placeholder="Enter specific location (e.g., Ikeja, Victoria Island)"
+                                placeholder="Enter specific location"
                                 stateFilter={getStateForLocationSearch()}
                                 className="rounded-[2rem]"
                               />
@@ -477,20 +569,20 @@ const RideBookingFormNew = () => {
                       />
                     </div>
                   )}
-                  
-                  {(watchFrom && watchTo && !isLocationStepValid()) && (
-                    <div className="text-destructive text-sm mt-2">
-                      {bookingType === 'full' 
-                        ? "You must select a university for one location, a state for the other, and specify your exact location."
-                        : "You must select a university for one location and a state for the other."
-                      }
+
+                  {/* Available Rides Info */}
+                  {bookingType === 'join' && availableRides.length === 0 && watchFrom && watchTo && (
+                    <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                      <p className="text-sm text-orange-800">
+                        No available rides for this route. You'll need to book the entire ride.
+                      </p>
                     </div>
                   )}
                   
                   <Button 
                     type="button"
                     onClick={nextStep} 
-                    className="w-full bg-black text-white hover:bg-gray-900 transform active:scale-95 transition-transform duration-200" 
+                    className="w-full bg-black text-white hover:bg-gray-900" 
                     disabled={!isLocationStepValid()}
                   >
                     Next
@@ -556,7 +648,7 @@ const RideBookingFormNew = () => {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {["06:00", "08:00", "10:00", "12:00", "14:00", "16:00", "18:00", "20:00"].map((time) => (
+                            {(availableTimes || ["08:00", "12:00", "14:00", "18:00"]).map((time) => (
                               <SelectItem key={time} value={time}>{time}</SelectItem>
                             ))}
                           </SelectContent>
@@ -566,50 +658,60 @@ const RideBookingFormNew = () => {
                     )}
                   />
                   
-                  {/* Passengers */}
-                  <FormField
-                    control={form.control}
-                    name="passengers"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Number of Passengers</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                          value={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger className="flex items-center hover:border-black transition-colors rounded-[2rem]">
-                              <Users className="mr-2 h-5 w-5 text-gray-500" />
-                              <SelectValue placeholder="Select passengers" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {[1, 2, 3, 4, 5, 6].map(num => (
-                              <SelectItem key={num} value={num.toString()}>
-                                {num} {num === 1 ? 'passenger' : 'passengers'}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  {/* Passengers - only show for join rides */}
+                  {bookingType === 'join' && (
+                    <FormField
+                      control={form.control}
+                      name="passengers"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Number of Passengers</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            value={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger className="flex items-center hover:border-black transition-colors rounded-[2rem]">
+                                <Users className="mr-2 h-5 w-5 text-gray-500" />
+                                <SelectValue placeholder="Select passengers" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {[1, 2, 3, 4, 5, 6].map(num => (
+                                <SelectItem key={num} value={num.toString()}>
+                                  {num} {num === 1 ? 'passenger' : 'passengers'}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+
+                  {bookingType === 'full' && (
+                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <p className="text-sm text-blue-800">
+                        You're booking the entire vehicle. Number of passengers will be determined by the vehicle capacity.
+                      </p>
+                    </div>
+                  )}
                   
                   <div className="flex gap-2">
                     <Button 
                       type="button"
                       variant="outline" 
                       onClick={prevStep} 
-                      className="w-1/2 hover:bg-gray-100 transition-colors"
+                      className="w-1/2"
                     >
                       Back
                     </Button>
                     <Button 
                       type="button"
                       onClick={nextStep} 
-                      className="w-1/2 bg-black text-white hover:bg-gray-900 transform active:scale-95 transition-transform duration-200" 
+                      className="w-1/2 bg-black text-white hover:bg-gray-900" 
                       disabled={!isDateStepValid}
                     >
                       Next
@@ -620,45 +722,30 @@ const RideBookingFormNew = () => {
 
               {currentStep === 'vehicle' && (
                 <div className="space-y-4">
-                  {/* Vehicle Selection */}
+                  <FormLabel>Select Vehicle</FormLabel>
                   <FormField
                     control={form.control}
                     name="vehicleId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Select Vehicle</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                          value={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger className="flex items-center hover:border-black transition-colors rounded-[2rem]">
-                              <Car className="mr-2 h-5 w-5 text-gray-500" />
-                              <SelectValue placeholder="Select a vehicle" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {vehicles.map(vehicle => (
-                              <SelectItem key={vehicle.id} value={vehicle.id}>
-                                {vehicle.name} - {vehicle.capacity} seats
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <FormControl>
+                          <VehicleOptions
+                            selectedVehicle={field.value}
+                            onSelect={field.onChange}
+                            bookingType={bookingType}
+                          />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
 
-                  {selectedVehicle && (
-                    <div className="p-4 border rounded-lg bg-gray-50 hover:shadow-md transition-all duration-300">
-                      <h3 className="font-semibold">{selectedVehicle.name}</h3>
-                      <div className="text-sm text-gray-600 mt-1">
-                        <p>Capacity: {selectedVehicle.capacity} passengers</p>
-                        <p>Price: ₦{selectedVehicle.price.toLocaleString()}</p>
-                        {bookingType === 'join' && (
-                          <p>Your Price: ₦{Math.round(selectedVehicle.price / selectedVehicle.capacity).toLocaleString()} per person</p>
+                  {calculatedPrice > 0 && (
+                    <div className="p-4 border rounded-lg bg-gray-50">
+                      <div className="text-lg font-semibold">
+                        Total: ₦{calculatedPrice.toLocaleString()}
+                        {bookingType === 'full' && (
+                          <span className="text-sm text-green-600 block">10% discount applied!</span>
                         )}
                       </div>
                     </div>
@@ -669,16 +756,16 @@ const RideBookingFormNew = () => {
                       type="button"
                       variant="outline" 
                       onClick={prevStep} 
-                      className="w-1/2 hover:bg-gray-100 transition-colors"
+                      className="w-1/2"
                     >
                       Back
                     </Button>
                     <Button 
                       type="submit" 
-                      className="w-1/2 bg-black text-white hover:bg-gray-900 transform active:scale-95 transition-transform duration-200"
+                      className="w-1/2 bg-black text-white hover:bg-gray-900"
                       disabled={!watchVehicleId}
                     >
-                      {bookingType === 'join' ? 'Join Ride' : 'Book Entire Ride'}
+                      {bookingType === 'join' ? 'Book Seat' : 'Book Entire Ride'}
                     </Button>
                   </div>
                 </div>

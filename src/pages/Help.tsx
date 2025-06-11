@@ -1,261 +1,160 @@
 
-import React, { useState } from "react";
+import React from "react";
 import Navbar from "@/components/Navbar";
-import { Button } from "@/components/ui/button";
+import Footer from "@/components/Footer";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { MessageCircle, Phone, Mail, Clock, Send, X, Minimize2, Maximize2 } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Mail, Phone, MessageCircle, HelpCircle, Search } from "lucide-react";
 
 const Help = () => {
-  const [isLiveChatOpen, setIsLiveChatOpen] = useState(false);
-  const [isMinimized, setIsMinimized] = useState(false);
-  const [chatMessage, setChatMessage] = useState("");
-  const [chatMessages, setChatMessages] = useState([
-    { id: 1, text: "Hi! How can I help you today?", sender: "agent", timestamp: new Date() }
-  ]);
+  const currentYear = new Date().getFullYear();
 
-  const sendMessage = () => {
-    if (chatMessage.trim()) {
-      const newMessage = {
-        id: chatMessages.length + 1,
-        text: chatMessage,
-        sender: "user" as const,
-        timestamp: new Date()
-      };
-      setChatMessages([...chatMessages, newMessage]);
-      setChatMessage("");
-      
-      // Simulate agent response
-      setTimeout(() => {
-        const agentResponse = {
-          id: chatMessages.length + 2,
-          text: "Thank you for your message. A support agent will respond shortly.",
-          sender: "agent" as const,
-          timestamp: new Date()
-        };
-        setChatMessages(prev => [...prev, agentResponse]);
-      }, 1000);
+  const faqs = [
+    {
+      question: "How do I book a ride?",
+      answer: "Simply select your departure and destination locations, choose your preferred date and time, select a vehicle, and proceed to payment. Once confirmed, you'll receive booking details."
+    },
+    {
+      question: "How much does it cost to book a ride?",
+      answer: "Pricing varies based on the route, vehicle type, and whether you're booking a seat or the entire ride. Full ride bookings receive a 10% discount."
+    },
+    {
+      question: "Can I cancel my booking?",
+      answer: "Yes, you can cancel your booking up to 24 hours before departure for a full refund. Cancellations within 24 hours may incur charges."
+    },
+    {
+      question: "How do I become a driver?",
+      answer: "Visit our 'Become a Driver' page, complete the registration form with your license and vehicle details, and wait for verification. Our team will review your application within 3-5 business days."
+    },
+    {
+      question: "Is Uniride safe?",
+      answer: "Yes, all our drivers are verified with background checks, valid licenses, and insurance. We maintain a 99% safety rating through strict verification processes."
+    },
+    {
+      question: "What payment methods do you accept?",
+      answer: "We accept all major payment methods through Paystack, including bank cards, bank transfers, USSD, and QR codes."
     }
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
-  };
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-12">
+        {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">How can we help you?</h1>
-          <p className="text-xl text-gray-600">Find answers or get in touch with our support team</p>
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">Help Center</h1>
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            Find answers to common questions or get in touch with our support team
+          </p>
         </div>
 
-        {/* Contact Options */}
-        <div className="grid md:grid-cols-3 gap-6 mb-12">
-          <Card className="text-center hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <div className="mx-auto w-12 h-12 bg-black rounded-full flex items-center justify-center mb-4">
-                <MessageCircle className="w-6 h-6 text-white" />
-              </div>
-              <CardTitle>Live Chat</CardTitle>
-              <CardDescription>Get instant help from our support team</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button 
-                onClick={() => setIsLiveChatOpen(true)}
-                className="w-full bg-black hover:bg-gray-800"
-              >
-                Start Live Chat
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="text-center hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <div className="mx-auto w-12 h-12 bg-black rounded-full flex items-center justify-center mb-4">
-                <Phone className="w-6 h-6 text-white" />
-              </div>
-              <CardTitle>Phone Support</CardTitle>
-              <CardDescription>Call us during business hours</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="font-semibold text-lg mb-2">+234-800-UNIRIDE</p>
-              <p className="text-sm text-gray-600">Mon-Fri: 8AM-8PM</p>
-            </CardContent>
-          </Card>
-
-          <Card className="text-center hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <div className="mx-auto w-12 h-12 bg-black rounded-full flex items-center justify-center mb-4">
-                <Mail className="w-6 h-6 text-white" />
-              </div>
-              <CardTitle>Email Support</CardTitle>
-              <CardDescription>Send us a detailed message</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="font-semibold text-lg mb-2">support@uniride.com</p>
-              <p className="text-sm text-gray-600">Response within 24 hours</p>
-            </CardContent>
-          </Card>
+        {/* Search Bar */}
+        <div className="max-w-2xl mx-auto mb-12">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+            <Input 
+              placeholder="Search for help articles..."
+              className="pl-10 py-3 text-lg rounded-full"
+            />
+          </div>
         </div>
 
-        {/* FAQ Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Frequently Asked Questions</CardTitle>
-            <CardDescription>Quick answers to common questions</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Accordion type="single" collapsible className="w-full">
-              <AccordionItem value="item-1">
-                <AccordionTrigger>How do I book a ride?</AccordionTrigger>
-                <AccordionContent>
-                  To book a ride, select your pickup and destination locations, choose your preferred date and time, select a vehicle type, and confirm your booking with payment.
-                </AccordionContent>
-              </AccordionItem>
-              
-              <AccordionItem value="item-2">
-                <AccordionTrigger>What payment methods do you accept?</AccordionTrigger>
-                <AccordionContent>
-                  We accept all major credit cards, debit cards, and mobile payment options like bank transfers and digital wallets.
-                </AccordionContent>
-              </AccordionItem>
-              
-              <AccordionItem value="item-3">
-                <AccordionTrigger>Can I cancel my booking?</AccordionTrigger>
-                <AccordionContent>
-                  Yes, you can cancel your booking up to 2 hours before the scheduled departure time for a full refund. Cancellations made less than 2 hours before departure may incur a small fee.
-                </AccordionContent>
-              </AccordionItem>
-              
-              <AccordionItem value="item-4">
-                <AccordionTrigger>How do I become a driver?</AccordionTrigger>
-                <AccordionContent>
-                  To become a driver, you need a valid driver's license, vehicle registration, insurance, and must pass our background check. Visit our "Drive with us" page to start the application process.
-                </AccordionContent>
-              </AccordionItem>
-              
-              <AccordionItem value="item-5">
-                <AccordionTrigger>Is Uniride safe?</AccordionTrigger>
-                <AccordionContent>
-                  Yes, safety is our top priority. All drivers undergo background checks, vehicles are regularly inspected, and we provide 24/7 support. You can also share your trip details with friends and family.
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-          </CardContent>
-        </Card>
-
-        {/* Contact Form */}
-        <Card className="mt-8">
-          <CardHeader>
-            <CardTitle>Send us a message</CardTitle>
-            <CardDescription>Can't find what you're looking for? Send us a message and we'll get back to you.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form className="space-y-4">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Name</label>
-                  <Input placeholder="Your full name" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Email</label>
-                  <Input type="email" placeholder="your@email.com" />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Subject</label>
-                <Input placeholder="What is this about?" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Message</label>
-                <Textarea placeholder="Describe your issue or question..." rows={5} />
-              </div>
-              <Button type="submit" className="w-full md:w-auto bg-black hover:bg-gray-800">
-                Send Message
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Live Chat Widget */}
-      {isLiveChatOpen && (
-        <div className={`fixed bottom-4 right-4 bg-white rounded-lg shadow-2xl border transition-all duration-300 ${
-          isMinimized ? 'w-80 h-16' : 'w-96 h-[500px]'
-        } z-50`}>
-          {/* Chat Header */}
-          <div className="bg-black text-white p-4 rounded-t-lg flex items-center justify-between">
-            <div className="flex items-center">
-              <div className="w-3 h-3 bg-green-400 rounded-full mr-2"></div>
-              <h3 className="font-semibold">Live Support</h3>
-            </div>
-            <div className="flex items-center space-x-2">
-              <button 
-                onClick={() => setIsMinimized(!isMinimized)}
-                className="text-white hover:text-gray-300"
-              >
-                {isMinimized ? <Maximize2 className="w-4 h-4" /> : <Minimize2 className="w-4 h-4" />}
-              </button>
-              <button 
-                onClick={() => setIsLiveChatOpen(false)}
-                className="text-white hover:text-gray-300"
-              >
-                <X className="w-4 h-4" />
-              </button>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* FAQs */}
+          <div className="lg:col-span-2">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Frequently Asked Questions</h2>
+            
+            <div className="space-y-4">
+              {faqs.map((faq, index) => (
+                <Card key={index} className="hover:shadow-md transition-shadow">
+                  <CardHeader>
+                    <CardTitle className="flex items-start gap-3 text-lg">
+                      <HelpCircle className="h-5 w-5 text-blue-600 mt-1 flex-shrink-0" />
+                      {faq.question}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-gray-600 leading-relaxed">{faq.answer}</p>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </div>
 
-          {!isMinimized && (
-            <>
-              {/* Chat Messages */}
-              <div className="p-4 h-80 overflow-y-auto space-y-4">
-                {chatMessages.map((message) => (
-                  <div key={message.id} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-xs p-3 rounded-lg ${
-                      message.sender === 'user' 
-                        ? 'bg-black text-white' 
-                        : 'bg-gray-100 text-gray-900'
-                    }`}>
-                      <p className="text-sm">{message.text}</p>
-                      <p className="text-xs mt-1 opacity-70">
-                        {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </p>
-                    </div>
+          {/* Contact Information */}
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageCircle className="h-5 w-5" />
+                  Contact Support
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <Mail className="h-5 w-5 text-gray-600" />
+                  <div>
+                    <p className="font-medium">Email</p>
+                    <p className="text-sm text-gray-600">support@uniride.ng</p>
                   </div>
-                ))}
-              </div>
-
-              {/* Chat Input */}
-              <div className="p-4 border-t">
-                <div className="flex space-x-2">
-                  <Input
-                    value={chatMessage}
-                    onChange={(e) => setChatMessage(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    placeholder="Type your message..."
-                    className="flex-1"
-                  />
-                  <Button 
-                    onClick={sendMessage}
-                    size="sm"
-                    className="bg-black hover:bg-gray-800"
-                  >
-                    <Send className="w-4 h-4" />
-                  </Button>
                 </div>
-              </div>
-            </>
-          )}
+                
+                <div className="flex items-center gap-3">
+                  <Phone className="h-5 w-5 text-gray-600" />
+                  <div>
+                    <p className="font-medium">Phone</p>
+                    <p className="text-sm text-gray-600">+234 (0) 800 UNIRIDE</p>
+                  </div>
+                </div>
+                
+                <div className="pt-4">
+                  <p className="text-sm text-gray-600 mb-2">Business Hours:</p>
+                  <p className="text-sm">Monday - Friday: 8AM - 8PM</p>
+                  <p className="text-sm">Saturday - Sunday: 9AM - 6PM</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Contact Form */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Send us a Message</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form className="space-y-4">
+                  <Input placeholder="Your Name" />
+                  <Input type="email" placeholder="Your Email" />
+                  <Input placeholder="Subject" />
+                  <Textarea placeholder="Your Message" rows={4} />
+                  <Button className="w-full bg-black hover:bg-gray-900">
+                    Send Message
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+
+            {/* Quick Links */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Quick Links</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <a href="/terms" className="block text-blue-600 hover:underline">Terms & Conditions</a>
+                  <a href="/privacy" className="block text-blue-600 hover:underline">Privacy Policy</a>
+                  <a href="/driver-requirements" className="block text-blue-600 hover:underline">Driver Requirements</a>
+                  <a href="/about" className="block text-blue-600 hover:underline">About Uniride</a>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
-      )}
+      </div>
+
+      <Footer />
     </div>
   );
 };

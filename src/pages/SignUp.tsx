@@ -1,10 +1,9 @@
 
 import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Mail, Lock, User, UserPlus } from "lucide-react";
+import { Mail, Lock, User, Phone } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import {
   Card,
@@ -32,13 +31,13 @@ const formSchema = z.object({
     message: "Full name must be at least 2 characters",
   }),
   email: z.string().email({ message: "Please enter a valid email address" }),
+  phoneNumber: z.string().min(10, {
+    message: "Please enter a valid phone number",
+  }),
   password: z.string().min(8, {
     message: "Password must be at least 8 characters",
   }),
   confirmPassword: z.string(),
-  agreeToTerms: z.boolean().refine(val => val === true, {
-    message: "You must agree to the terms and conditions",
-  }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -46,24 +45,27 @@ const formSchema = z.object({
 
 const SignUp = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { signUp, signInWithGoogle, user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
+  const from = location.state?.from?.pathname || "/dashboard";
+
   useEffect(() => {
     if (user) {
-      navigate("/dashboard", { replace: true });
+      navigate(from, { replace: true });
     }
-  }, [user, navigate]);
+  }, [user, navigate, from]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       fullName: "",
       email: "",
+      phoneNumber: "",
       password: "",
       confirmPassword: "",
-      agreeToTerms: false,
     },
   });
 
@@ -71,14 +73,10 @@ const SignUp = () => {
     setIsLoading(true);
     
     try {
-      const { error } = await signUp(values.email, values.password, values.fullName);
+      const { error } = await signUp(values.email, values.password, values.fullName, values.phoneNumber);
       
       if (error) {
-        if (error.message.includes("already registered")) {
-          toast.error("This email is already registered. Please sign in instead.");
-        } else {
-          toast.error(error.message || "Failed to create account");
-        }
+        toast.error(error.message || "Failed to create account");
       } else {
         toast.success("Account created successfully! Please check your email to verify your account.");
         navigate("/signin");
@@ -90,14 +88,14 @@ const SignUp = () => {
     }
   };
 
-  const handleGoogleSignIn = async () => {
+  const handleGoogleSignUp = async () => {
     setIsGoogleLoading(true);
     
     try {
       const { error } = await signInWithGoogle();
       
       if (error) {
-        toast.error(error.message || "Failed to sign in with Google");
+        toast.error(error.message || "Failed to sign up with Google");
       }
     } catch (error) {
       toast.error("An unexpected error occurred");
@@ -113,9 +111,9 @@ const SignUp = () => {
       <div className="flex-1 flex items-center justify-center px-4 py-12">
         <Card className="w-full max-w-md bg-white border-0 shadow-lg">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold tracking-tight">Create account</CardTitle>
+            <CardTitle className="text-2xl font-bold tracking-tight">Create Account</CardTitle>
             <CardDescription>
-              Enter your details to create your Uniride account
+              Join Uniride and start your journey
             </CardDescription>
           </CardHeader>
           
@@ -124,7 +122,7 @@ const SignUp = () => {
               type="button"
               variant="outline"
               className="w-full"
-              onClick={handleGoogleSignIn}
+              onClick={handleGoogleSignUp}
               disabled={isGoogleLoading}
             >
               {isGoogleLoading ? (
@@ -133,7 +131,7 @@ const SignUp = () => {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                   </svg>
-                  Signing up...
+                  Creating account...
                 </span>
               ) : (
                 <span className="flex items-center">
@@ -153,12 +151,12 @@ const SignUp = () => {
                 <span className="w-full border-t" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-muted-foreground">Or continue with</span>
+                <span className="bg-white px-2 text-muted-foreground">Or create account with email</span>
               </div>
             </div>
 
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
                   control={form.control}
                   name="fullName"
@@ -170,7 +168,7 @@ const SignUp = () => {
                           <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
                           <Input
                             className="pl-10 bg-white border-gray-200"
-                            placeholder="John Doe"
+                            placeholder="Enter your full name"
                             {...field}
                           />
                         </div>
@@ -193,6 +191,28 @@ const SignUp = () => {
                             className="pl-10 bg-white border-gray-200"
                             placeholder="name@example.com"
                             type="email"
+                            {...field}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="phoneNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-gray-900">Phone Number</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                          <Input
+                            className="pl-10 bg-white border-gray-200"
+                            placeholder="+234 123 456 7890"
+                            type="tel"
                             {...field}
                           />
                         </div>
@@ -246,33 +266,6 @@ const SignUp = () => {
                   )}
                 />
                 
-                <FormField
-                  control={form.control}
-                  name="agreeToTerms"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel className="text-sm text-gray-600">
-                          I agree to the{" "}
-                          <Link to="/terms" className="text-black hover:underline">
-                            terms and conditions
-                          </Link>{" "}
-                          and{" "}
-                          <Link to="/privacy" className="text-black hover:underline">
-                            privacy policy
-                          </Link>
-                        </FormLabel>
-                      </div>
-                    </FormItem>
-                  )}
-                />
-                
                 <Button
                   type="submit"
                   className="w-full bg-black text-white hover:bg-neutral-800"
@@ -287,23 +280,20 @@ const SignUp = () => {
                       Creating account...
                     </span>
                   ) : (
-                    <span className="flex items-center">
-                      <UserPlus className="mr-2 h-4 w-4" />
-                      Create account
-                    </span>
+                    "Create Account"
                   )}
                 </Button>
-                
-                <div className="text-center mt-4">
-                  <p className="text-sm text-gray-600">
-                    Already have an account?{" "}
-                    <Link to="/signin" className="font-medium text-black hover:underline">
-                      Sign in
-                    </Link>
-                  </p>
-                </div>
               </form>
             </Form>
+            
+            <div className="text-center mt-4">
+              <p className="text-sm text-gray-600">
+                Already have an account?{" "}
+                <Link to="/signin" className="font-medium text-black hover:underline">
+                  Sign in
+                </Link>
+              </p>
+            </div>
           </CardContent>
         </Card>
       </div>

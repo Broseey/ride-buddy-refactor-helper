@@ -1,55 +1,80 @@
 
 import React, { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Users, Car, MapPin, DollarSign, Settings, BarChart3 } from "lucide-react";
-import LocationManagement from "@/components/admin/LocationManagement";
+import { Users, Car, MapPin, DollarSign, TrendingUp, Activity } from "lucide-react";
+import Navbar from "@/components/Navbar";
+import RideManagement from "@/components/admin/RideManagement";
+import RealTimeLocationManager from "@/components/admin/RealTimeLocationManager";
+import CreateRide from "@/components/admin/CreateRide";
+import PricingManagement from "@/components/admin/PricingManagement";
+import UniversityStateManager from "@/components/admin/UniversityStateManager";
+import AdminAvailableRides from "@/components/admin/AdminAvailableRides";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
 
-  // Mock data - in real app, this would come from Supabase
-  const stats = {
-    totalUsers: 1248,
-    totalDrivers: 156,
-    activeRides: 23,
-    totalRevenue: 2450000
-  };
+  // Fetch admin stats
+  const { data: stats } = useQuery({
+    queryKey: ['admin-stats'],
+    queryFn: async () => {
+      const [ridesResponse, usersResponse, driversResponse, partnersResponse] = await Promise.all([
+        supabase.from('rides').select('id, status', { count: 'exact' }),
+        supabase.from('profiles').select('id', { count: 'exact' }),
+        supabase.from('driver_profiles').select('id', { count: 'exact' }),
+        supabase.from('ride_companies').select('id', { count: 'exact' })
+      ]);
 
-  const recentDrivers = [
-    { id: 1, name: "John Doe", email: "john@example.com", status: "pending", joinedAt: "2024-01-15" },
-    { id: 2, name: "Jane Smith", email: "jane@example.com", status: "verified", joinedAt: "2024-01-14" },
-    { id: 3, name: "Mike Johnson", email: "mike@example.com", status: "rejected", joinedAt: "2024-01-13" },
-  ];
+      return {
+        totalRides: ridesResponse.count || 0,
+        totalUsers: usersResponse.count || 0,
+        totalDrivers: driversResponse.count || 0,
+        totalPartners: partnersResponse.count || 0,
+        activeRides: ridesResponse.data?.filter(ride => 
+          ride.status === 'confirmed' || ride.status === 'pending' || ride.status === 'available'
+        ).length || 0
+      };
+    },
+  });
 
-  const recentRides = [
-    { id: 1, from: "University of Lagos", to: "Lagos", status: "completed", price: 5000 },
-    { id: 2, from: "Ahmadu Bello University", to: "Kaduna", status: "active", price: 7500 },
-    { id: 3, from: "University of Ibadan", to: "Oyo", status: "pending", price: 4500 },
-  ];
+  // Fetch partnership applications
+  const { data: partnerApplications } = useQuery({
+    queryKey: ['partner-applications'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('ride_companies')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data || [];
+    },
+  });
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="border-b bg-white">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-600 mt-1">Manage your ride-sharing platform</p>
-        </div>
-      </div>
-
+      <Navbar />
+      
       <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+          <p className="text-gray-600 mt-2">Manage your Uniride platform</p>
+        </div>
+
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="drivers">Drivers</TabsTrigger>
-            <TabsTrigger value="rides">Rides</TabsTrigger>
-            <TabsTrigger value="locations">Locations & Pricing</TabsTrigger>
+            <TabsTrigger value="rides">All Rides</TabsTrigger>
+            <TabsTrigger value="available-rides">Available Rides</TabsTrigger>
+            <TabsTrigger value="create-ride">Create Ride</TabsTrigger>
+            <TabsTrigger value="locations">Locations</TabsTrigger>
+            <TabsTrigger value="partners">Partners</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
-            {/* Stats Cards */}
+            {/* Stats Overview */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -57,129 +82,132 @@ const AdminDashboard = () => {
                   <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{stats.totalUsers.toLocaleString()}</div>
-                  <p className="text-xs text-muted-foreground">+12% from last month</p>
+                  <div className="text-2xl font-bold">{stats?.totalUsers || 0}</div>
+                  <p className="text-xs text-muted-foreground">Registered students</p>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Drivers</CardTitle>
+                  <CardTitle className="text-sm font-medium">Total Rides</CardTitle>
                   <Car className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{stats.totalDrivers}</div>
-                  <p className="text-xs text-muted-foreground">+8% from last month</p>
+                  <div className="text-2xl font-bold">{stats?.totalRides || 0}</div>
+                  <p className="text-xs text-muted-foreground">All time bookings</p>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Active Rides</CardTitle>
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                  <Activity className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{stats.activeRides}</div>
-                  <p className="text-xs text-muted-foreground">Live tracking</p>
+                  <div className="text-2xl font-bold">{stats?.activeRides || 0}</div>
+                  <p className="text-xs text-muted-foreground">Currently active</p>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-sm font-medium">Partners</CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">₦{stats.totalRevenue.toLocaleString()}</div>
-                  <p className="text-xs text-muted-foreground">+18% from last month</p>
+                  <div className="text-2xl font-bold">{stats?.totalPartners || 0}</div>
+                  <p className="text-xs text-muted-foreground">Company partners</p>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Recent Activity */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Recent Driver Applications</CardTitle>
-                  <CardDescription>Latest driver verification requests</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {recentDrivers.map((driver) => (
-                      <div key={driver.id} className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium">{driver.name}</p>
-                          <p className="text-sm text-gray-500">{driver.email}</p>
-                        </div>
-                        <Badge 
-                          variant={
-                            driver.status === 'verified' ? 'default' : 
-                            driver.status === 'pending' ? 'secondary' : 'destructive'
-                          }
-                        >
-                          {driver.status}
-                        </Badge>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Recent Rides</CardTitle>
-                  <CardDescription>Latest ride bookings and completions</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {recentRides.map((ride) => (
-                      <div key={ride.id} className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium">{ride.from} → {ride.to}</p>
-                          <p className="text-sm text-gray-500">₦{ride.price.toLocaleString()}</p>
-                        </div>
-                        <Badge 
-                          variant={
-                            ride.status === 'completed' ? 'default' : 
-                            ride.status === 'active' ? 'secondary' : 'outline'
-                          }
-                        >
-                          {ride.status}
-                        </Badge>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="drivers" className="space-y-6">
+            {/* Quick Actions */}
             <Card>
               <CardHeader>
-                <CardTitle>Driver Management</CardTitle>
-                <CardDescription>Verify and manage driver applications</CardDescription>
+                <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-center text-gray-500 py-8">Driver management interface coming soon...</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <button 
+                    onClick={() => setActiveTab("create-ride")}
+                    className="p-4 rounded-lg bg-black text-white hover:bg-gray-800 transition-colors text-left"
+                  >
+                    <Car className="h-6 w-6 mb-2" />
+                    <h3 className="font-medium">Create New Ride</h3>
+                    <p className="text-sm opacity-80">Add available ride for users</p>
+                  </button>
+                  
+                  <button 
+                    onClick={() => setActiveTab("locations")}
+                    className="p-4 rounded-lg border hover:bg-gray-50 transition-colors text-left"
+                  >
+                    <MapPin className="h-6 w-6 mb-2" />
+                    <h3 className="font-medium">Manage Locations</h3>
+                    <p className="text-sm text-gray-500">Universities & states</p>
+                  </button>
+                  
+                  <button 
+                    onClick={() => setActiveTab("partners")}
+                    className="p-4 rounded-lg border hover:bg-gray-50 transition-colors text-left"
+                  >
+                    <Users className="h-6 w-6 mb-2" />
+                    <h3 className="font-medium">Partner Applications</h3>
+                    <p className="text-sm text-gray-500">Review partnerships</p>
+                  </button>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="rides" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Ride Management</CardTitle>
-                <CardDescription>Monitor and manage all rides on the platform</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-center text-gray-500 py-8">Ride management interface coming soon...</p>
-              </CardContent>
-            </Card>
+          <TabsContent value="rides">
+            <RideManagement />
           </TabsContent>
 
-          <TabsContent value="locations" className="space-y-6">
-            <LocationManagement />
+          <TabsContent value="available-rides">
+            <AdminAvailableRides />
+          </TabsContent>
+
+          <TabsContent value="create-ride">
+            <CreateRide />
+          </TabsContent>
+
+          <TabsContent value="locations">
+            <UniversityStateManager />
+          </TabsContent>
+
+          <TabsContent value="partners">
+            <Card>
+              <CardHeader>
+                <CardTitle>Partnership Applications</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {!partnerApplications || partnerApplications.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <Users className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                    <p>No partnership applications yet.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {partnerApplications.map((partner) => (
+                      <div key={partner.id} className="border rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="font-medium">{partner.company_name}</h3>
+                          <Badge variant={partner.status === 'pending' ? 'secondary' : 'default'}>
+                            {partner.status}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-gray-600 mb-2">{partner.description}</p>
+                        <div className="text-sm text-gray-500">
+                          <p>Email: {partner.contact_email}</p>
+                          {partner.contact_phone && <p>Phone: {partner.contact_phone}</p>}
+                          {partner.website_url && <p>Website: {partner.website_url}</p>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>

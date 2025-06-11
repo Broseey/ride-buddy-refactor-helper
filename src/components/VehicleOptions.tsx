@@ -1,6 +1,5 @@
 
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 
 interface Vehicle {
@@ -15,81 +14,87 @@ interface Vehicle {
 interface VehicleOptionsProps {
   selectedVehicle: string;
   onSelect: (id: string) => void;
+  bookingType?: 'join' | 'full';
 }
 
 const vehicles: Vehicle[] = [
   {
-    id: "sienna",
-    name: "Toyota Sienna",
-    image: "🚐",
-    capacity: 6,
-    price: 5000,
-    features: ["Air Conditioning", "Comfortable Seating", "Luggage Space"]
-  },
-  {
-    id: "hiace",
-    name: "Hiace Bus",
-    image: "🚌",
-    capacity: 14,
-    price: 7000,
-    features: ["Spacious Interior", "Air Conditioning", "Large Luggage Space"]
-  },
-  {
-    id: "long-bus",
-    name: "Long Bus",
-    image: "🚍",
-    capacity: 18,
-    price: 8000,
-    features: ["Maximum Capacity", "Economic Option", "Group Friendly"]
-  },
-  {
-    id: "corolla",
-    name: "Toyota Corolla",
+    id: "sedan",
+    name: "Sedan",
     image: "🚗",
     capacity: 4,
     price: 3500,
-    features: ["Comfort", "Speed", "Fuel Efficiency"]
+    features: ["Comfortable", "Air Conditioning"]
+  },
+  {
+    id: "minivan",
+    name: "Mini Van",
+    image: "🚐",
+    capacity: 6,
+    price: 5000,
+    features: ["Spacious", "Air Conditioning"]
+  },
+  {
+    id: "minibus",
+    name: "Mini Bus",
+    image: "🚌",
+    capacity: 14,
+    price: 7000,
+    features: ["Large Group", "Air Conditioning"]
+  },
+  {
+    id: "bus",
+    name: "Bus",
+    image: "🚍",
+    capacity: 18,
+    price: 8000,
+    features: ["Maximum Capacity", "Economic"]
   }
 ];
 
-const VehicleOptions = ({ selectedVehicle, onSelect }: VehicleOptionsProps) => {
+const VehicleOptions = ({ selectedVehicle, onSelect, bookingType = 'join' }: VehicleOptionsProps) => {
+  const calculatePrice = (vehicle: Vehicle) => {
+    if (bookingType === 'full') {
+      // 10% discount for full ride booking
+      return Math.round(vehicle.price * 0.9);
+    }
+    // Per seat pricing for join rides
+    return Math.round(vehicle.price / vehicle.capacity);
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-4xl">
       {vehicles.map((vehicle) => (
         <Card 
           key={vehicle.id}
-          className={`p-4 cursor-pointer transition-all rounded-[3.5rem] md:rounded-[5.5rem] ${
+          className={`p-4 cursor-pointer transition-all rounded-lg ${
             selectedVehicle === vehicle.id 
-              ? "border-purple-600 bg-purple-50"
-              : "hover:border-gray-300"
+              ? "border-blue-600 bg-blue-50"
+              : "hover:border-gray-300 border-gray-200"
           }`}
           onClick={() => onSelect(vehicle.id)}
         >
           <div className="flex items-start">
-            <div className="text-4xl mr-4">{vehicle.image}</div>
+            <div className="text-3xl mr-3">{vehicle.image}</div>
             <div className="flex-1">
               <div className="flex justify-between items-start">
-                <h3 className="font-medium">{vehicle.name}</h3>
+                <h3 className="font-semibold text-lg">{vehicle.name}</h3>
                 {selectedVehicle === vehicle.id && (
-                  <div className="bg-purple-600 text-white rounded-full p-1">
-                    <Check className="h-4 w-4" />
+                  <div className="bg-blue-600 text-white rounded-full p-1">
+                    <Check className="h-3 w-3" />
                   </div>
                 )}
               </div>
-              <div className="text-sm text-gray-500 mt-1">
+              <div className="text-sm text-gray-500 mb-2">
                 {vehicle.capacity} passengers
               </div>
-              <div className="mt-2">
-                <ul className="text-xs text-gray-600">
-                  {vehicle.features.map((feature, index) => (
-                    <li key={index} className="flex items-center">
-                      • {feature}
-                    </li>
-                  ))}
-                </ul>
+              <div className="text-xs text-gray-600 mb-3">
+                {vehicle.features.join(" • ")}
               </div>
-              <div className="mt-3 font-semibold text-purple-700">
-                ₦{vehicle.price.toLocaleString()}
+              <div className="font-bold text-blue-700">
+                ₦{calculatePrice(vehicle).toLocaleString()}
+                {bookingType === 'join' && <span className="text-xs text-gray-500 font-normal"> /seat</span>}
+                {bookingType === 'full' && <span className="text-xs text-green-600 font-normal"> (10% off)</span>}
               </div>
             </div>
           </div>
