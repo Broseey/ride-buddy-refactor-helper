@@ -2,14 +2,33 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Truck, DollarSign, Clock, MapPin, Users, Star, Calendar } from "lucide-react";
+import { Truck, DollarSign, Clock, MapPin, Users, Star, Calendar, Settings, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
-import DriverNavbar from "@/components/navbar/DriverNavbar";
 
 const DriverDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
-      <DriverNavbar />
+      {/* Driver Navigation */}
+      <nav className="bg-black py-4 px-6">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <div className="flex items-center">
+            <Link to="/">
+              <span className="text-white font-bold text-2xl tracking-tight">Uniride Driver</span>
+            </Link>
+          </div>
+          
+          <div className="flex items-center space-x-4">
+            <Button variant="ghost" className="text-white hover:bg-white/10">
+              <Settings className="mr-2 h-4 w-4" />
+              Settings
+            </Button>
+            <Button variant="ghost" className="text-white hover:bg-white/10">
+              <LogOut className="mr-2 h-4 w-4" />
+              Sign Out
+            </Button>
+          </div>
+        </div>
+      </nav>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Welcome Header */}
@@ -137,12 +156,10 @@ const DriverDashboard = () => {
         <div className="mt-8">
           <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Link to="/driver-earnings">
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center w-full">
-                <DollarSign className="h-6 w-6 mb-2" />
-                <span>Earnings</span>
-              </Button>
-            </Link>
+            <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
+              <DollarSign className="h-6 w-6 mb-2" />
+              <span>Earnings</span>
+            </Button>
             
             <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
               <Calendar className="h-6 w-6 mb-2" />

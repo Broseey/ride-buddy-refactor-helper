@@ -1,251 +1,205 @@
 
-import React, { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { MapPin, Calendar, Clock, Users, Car, CalendarPlus, Receipt, FileText } from "lucide-react";
-import { Link } from "react-router-dom";
-import { format } from "date-fns";
+import { useState } from "react";
 import Navbar from "@/components/Navbar";
-import RideReceipt from "@/components/RideReceipt";
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Clock, MapPin, Calendar, Car, Navigation } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const MyRides = () => {
-  const { user } = useAuth();
-  const [selectedRide, setSelectedRide] = useState<any>(null);
-  const [showReceipt, setShowReceipt] = useState(false);
+  const [activeTab, setActiveTab] = useState("upcoming");
 
-  // Fetch user's rides with real-time updates
-  const { data: rides, isLoading, refetch } = useQuery({
-    queryKey: ['user-rides', user?.id],
-    queryFn: async () => {
-      if (!user) return [];
-      
-      const { data, error } = await supabase
-        .from('rides')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return data || [];
+  const upcomingRides = [
+    {
+      id: "ride-001",
+      from: "Lagos",
+      to: "University of Ibadan",
+      date: "May 20, 2023",
+      time: "09:00 AM",
+      price: "₦1,200",
+      vehicle: "Sienna",
+      vehicleColor: "Silver",
+      licensePlate: "ABC-123XY",
+      status: "confirmed"
     },
-    enabled: !!user,
-  });
+    {
+      id: "ride-002",
+      from: "Abuja",
+      to: "Ahmadu Bello University",
+      date: "May 25, 2023",
+      time: "08:30 AM",
+      price: "₦1,500",
+      vehicle: "Hiace Bus",
+      vehicleColor: "White",
+      licensePlate: "DEF-456XY",
+      status: "pending"
+    }
+  ];
 
-  // Set up real-time subscription
-  useEffect(() => {
-    if (!user) return;
-
-    const channel = supabase
-      .channel('user-rides-updates')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'rides',
-          filter: `user_id=eq.${user.id}`
-        },
-        () => {
-          refetch();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user, refetch]);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Navbar />
-        <div className="flex items-center justify-center py-20">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-black"></div>
-        </div>
-      </div>
-    );
-  }
-
-  // Separate rides by status
-  const upcomingRides = rides?.filter(ride => 
-    ride.status === 'confirmed' || ride.status === 'pending'
-  ) || [];
-  
-  const pastRides = rides?.filter(ride => 
-    ride.status === 'completed' || ride.status === 'cancelled'
-  ) || [];
-
-  const handleViewReceipt = (ride: any) => {
-    setSelectedRide(ride);
-    setShowReceipt(true);
-  };
-
-  const RideCard = ({ ride, showReceiptButton = false }: { ride: any; showReceiptButton?: boolean }) => (
-    <Card className="hover:shadow-lg transition-shadow duration-200">
-      <CardContent className="p-6">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          {/* Route Information */}
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-3">
-              <MapPin className="h-5 w-5 text-gray-600" />
-              <span className="font-semibold text-lg">
-                {ride.from_location} → {ride.to_location}
-              </span>
-              <Badge variant={
-                ride.status === 'completed' ? 'default' : 
-                ride.status === 'confirmed' ? 'secondary' : 
-                ride.status === 'cancelled' ? 'destructive' : 'outline'
-              }>
-                {ride.status.charAt(0).toUpperCase() + ride.status.slice(1)}
-              </Badge>
-            </div>
-            
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm text-gray-600">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                <span>{format(new Date(ride.departure_date), 'MMM dd, yyyy')}</span>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4" />
-                <span>{ride.departure_time}</span>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <Car className="h-4 w-4" />
-                <span>{ride.booking_type === 'full' ? 'Full Ride' : 'Seat Booking'}</span>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                <span>{ride.seats_requested} {ride.seats_requested === 1 ? 'seat' : 'seats'}</span>
-              </div>
-            </div>
-
-            <div className="mt-3 text-sm text-gray-600">
-              <span>Booked on {format(new Date(ride.created_at), 'PPP')}</span>
-            </div>
-          </div>
-
-          {/* Price and Actions */}
-          <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-            <div className="text-center lg:text-right">
-              <div className="text-2xl font-bold text-green-600">
-                ₦{ride.price.toLocaleString()}
-              </div>
-              <div className="text-sm text-gray-500">Total paid</div>
-            </div>
-            
-            {showReceiptButton && ride.status === 'completed' && (
-              <Button
-                onClick={() => handleViewReceipt(ride)}
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-2"
-              >
-                <Receipt className="h-4 w-4" />
-                View Receipt
-              </Button>
-            )}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-
-  const EmptyState = ({ title, description, actionText, actionLink }: {
-    title: string;
-    description: string;
-    actionText: string;
-    actionLink: string;
-  }) => (
-    <Card className="text-center py-12">
-      <CardContent>
-        <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-        <h3 className="text-xl font-semibold text-gray-900 mb-2">{title}</h3>
-        <p className="text-gray-600 mb-6">{description}</p>
-        <Link to={actionLink}>
-          <Button className="bg-black text-white hover:bg-gray-800">
-            <CalendarPlus className="mr-2 h-4 w-4" />
-            {actionText}
-          </Button>
-        </Link>
-      </CardContent>
-    </Card>
-  );
+  const pastRides = [
+    {
+      id: "ride-003",
+      from: "Port Harcourt",
+      to: "University of Port Harcourt",
+      date: "May 5, 2023",
+      time: "02:00 PM",
+      price: "₦800",
+      status: "completed"
+    },
+    {
+      id: "ride-004",
+      from: "Lagos",
+      to: "University of Lagos",
+      date: "April 28, 2023",
+      time: "10:30 AM",
+      price: "₦1,000",
+      status: "completed"
+    },
+    {
+      id: "ride-005",
+      from: "Ibadan",
+      to: "Lagos",
+      date: "April 22, 2023",
+      time: "08:00 AM",
+      price: "₦1,200",
+      status: "cancelled"
+    }
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">My Rides</h1>
-          <p className="text-gray-600 mt-2">Track your ride history and upcoming trips</p>
-        </div>
-
-        <Tabs defaultValue="upcoming" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 max-w-md">
-            <TabsTrigger value="upcoming">
-              Upcoming Rides ({upcomingRides.length})
-            </TabsTrigger>
-            <TabsTrigger value="past">
-              Past Rides ({pastRides.length})
-            </TabsTrigger>
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-6">My Rides</h1>
+        
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-8">
+            <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
+            <TabsTrigger value="past">Past</TabsTrigger>
           </TabsList>
-
-          <TabsContent value="upcoming" className="space-y-6">
+          
+          <TabsContent value="upcoming" className="space-y-4">
             {upcomingRides.length > 0 ? (
-              <div className="space-y-4">
-                {upcomingRides.map((ride) => (
-                  <RideCard key={ride.id} ride={ride} />
-                ))}
-              </div>
+              upcomingRides.map((ride) => (
+                <Card key={ride.id} className="overflow-hidden">
+                  <CardHeader className="pb-2 flex flex-row justify-between items-center">
+                    <CardTitle className="text-lg">
+                      {ride.from} to {ride.to}
+                    </CardTitle>
+                    <Badge 
+                      variant={ride.status === "confirmed" ? "default" : "secondary"}
+                      className={ride.status === "confirmed" ? "bg-green-500" : "bg-amber-500"}
+                    >
+                      {ride.status.charAt(0).toUpperCase() + ride.status.slice(1)}
+                    </Badge>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex items-center text-sm space-x-4">
+                        <div className="flex items-center">
+                          <Calendar className="h-4 w-4 mr-1" />
+                          <span>{ride.date}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <Clock className="h-4 w-4 mr-1" />
+                          <span>{ride.time}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <Car className="h-4 w-4 mr-1" />
+                          <span>{ride.vehicle}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="font-bold text-lg">
+                        {ride.price}
+                      </div>
+                      
+                      <div className="flex space-x-2 pt-2">
+                        <Button variant="outline" size="sm" className="border-black text-black hover:bg-black hover:text-white">
+                          View Details
+                        </Button>
+                        <Button size="sm" className="bg-black text-white hover:bg-neutral-800">
+                          <Navigation className="mr-2 h-4 w-4" />
+                          Track Ride
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
             ) : (
-              <EmptyState
-                title="No Upcoming Rides"
-                description="You don't have any upcoming rides scheduled. Book your next trip to get started!"
-                actionText="Book a Ride"
-                actionLink="/"
-              />
+              <div className="text-center py-12">
+                <p className="text-gray-500 mb-4">You don't have any upcoming rides.</p>
+                <Link to="/">
+                  <Button className="bg-black text-white hover:bg-neutral-800">
+                    Book a Ride
+                  </Button>
+                </Link>
+              </div>
             )}
           </TabsContent>
-
-          <TabsContent value="past" className="space-y-6">
-            {pastRides.length > 0 ? (
-              <div className="space-y-4">
-                {pastRides.map((ride) => (
-                  <RideCard key={ride.id} ride={ride} showReceiptButton />
-                ))}
-              </div>
-            ) : (
-              <EmptyState
-                title="No Past Rides"
-                description="You haven't completed any rides yet. Your ride history will appear here after your first trip."
-                actionText="Book Your First Ride"
-                actionLink="/"
-              />
-            )}
+          
+          <TabsContent value="past" className="space-y-4">
+            {pastRides.map((ride) => (
+              <Card key={ride.id} className="overflow-hidden">
+                <CardHeader className="pb-2 flex flex-row justify-between items-center">
+                  <CardTitle className="text-lg">
+                    {ride.from} to {ride.to}
+                  </CardTitle>
+                  <Badge 
+                    variant={ride.status === "completed" ? "outline" : "destructive"}
+                    className={ride.status === "completed" ? "border-green-500 text-green-500" : ""}
+                  >
+                    {ride.status.charAt(0).toUpperCase() + ride.status.slice(1)}
+                  </Badge>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center text-sm space-x-4">
+                      <div className="flex items-center">
+                        <Calendar className="h-4 w-4 mr-1" />
+                        <span>{ride.date}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <Clock className="h-4 w-4 mr-1" />
+                        <span>{ride.time}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="font-bold text-lg">
+                      {ride.price}
+                    </div>
+                    
+                    <div className="flex space-x-2 pt-2">
+                      <Button variant="outline" size="sm" className="border-black text-black hover:bg-black hover:text-white">
+                        View Details
+                      </Button>
+                      {ride.status === "completed" && (
+                        <Button variant="outline" size="sm" className="border-black text-black hover:bg-black hover:text-white">
+                          Book Again
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </TabsContent>
         </Tabs>
       </div>
-
-      {/* Receipt Modal */}
-      <Dialog open={showReceipt} onOpenChange={setShowReceipt}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Ride Receipt</DialogTitle>
-          </DialogHeader>
-          {selectedRide && <RideReceipt ride={selectedRide} />}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

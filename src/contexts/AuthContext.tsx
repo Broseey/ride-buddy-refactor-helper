@@ -11,16 +11,14 @@ interface AuthContextType {
   driverProfile: any;
   adminProfile: any;
   isLoading: boolean;
-  signUp: (email: string, password: string, fullName: string, phoneNumber?: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   driverSignUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>;
   driverSignIn: (email: string, password: string) => Promise<{ error: any }>;
   adminSignIn: (email: string, password: string) => Promise<{ error: any }>;
-  createAdminAccount: (email: string, password: string, fullName: string) => Promise<{ error: any }>;
   signInWithGoogle: () => Promise<{ error: any }>;
   driverSignInWithGoogle: () => Promise<{ error: any }>;
   signOut: () => Promise<void>;
-  refreshUserProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -41,41 +39,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [adminProfile, setAdminProfile] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const refreshUserProfile = async () => {
-    if (!session?.user) return;
-    
-    try {
-      // Fetch user profile
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', session.user.id)
-        .single();
-      
-      setUserProfile(profile);
-
-      // Fetch driver profile
-      const { data: driverProf } = await supabase
-        .from('driver_profiles')
-        .select('*')
-        .eq('id', session.user.id)
-        .single();
-      
-      setDriverProfile(driverProf);
-
-      // Fetch admin profile
-      const { data: adminProf } = await supabase
-        .from('admin_users')
-        .select('*')
-        .eq('user_id', session.user.id)
-        .single();
-      
-      setAdminProfile(adminProf);
-    } catch (error) {
-      console.log('Error fetching profiles:', error);
-    }
-  };
-
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -86,7 +49,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (session?.user) {
           // Fetch user profiles after authentication
           setTimeout(async () => {
-            await refreshUserProfile();
+            try {
+              // Try to fetch user profile
+              const { data: profile } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', session.user.id)
+                .single();
+              
+              setUserProfile(profile);
+
+              // Try to fetch driver profile
+              const { data: driverProf } = await supabase
+                .from('driver_profiles')
+                .select('*')
+                .eq('id', session.user.id)
+                .single();
+              
+              setDriverProfile(driverProf);
+
+              // Try to fetch admin profile
+              const { data: adminProf } = await supabase
+                .from('admin_users')
+                .select('*')
+                .eq('user_id', session.user.id)
+                .single();
+              
+              setAdminProfile(adminProf);
+            } catch (error) {
+              console.log('Error fetching profiles:', error);
+            }
           }, 0);
         } else {
           setUserProfile(null);
@@ -108,7 +100,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, fullName: string, phoneNumber?: string) => {
+  const signUp = async (email: string, password: string, fullName: string) => {
     const redirectUrl = `${window.location.origin}/dashboard`;
     
     const { error } = await supabase.auth.signUp({
@@ -118,7 +110,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         emailRedirectTo: redirectUrl,
         data: {
           full_name: fullName,
-          phone_number: phoneNumber,
         }
       }
     });
@@ -206,44 +197,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { error };
   };
 
-  const createAdminAccount = async (email: string, password: string, fullName: string) => {
-    try {
-      // First create the user account
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: fullName,
-          }
-        }
-      });
-
-      if (authError) {
-        return { error: authError };
-      }
-
-      if (authData.user) {
-        // Create admin profile
-        const { error: adminError } = await supabase
-          .from('admin_users')
-          .insert({
-            user_id: authData.user.id,
-            admin_level: 'super_admin',
-            is_active: true
-          });
-
-        if (adminError) {
-          return { error: adminError };
-        }
-      }
-
-      return { error: null };
-    } catch (error) {
-      return { error };
-    }
-  };
-
   const signInWithGoogle = async () => {
     const redirectUrl = `${window.location.origin}/dashboard`;
     
@@ -292,11 +245,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     driverSignUp,
     driverSignIn,
     adminSignIn,
-    createAdminAccount,
     signInWithGoogle,
     driverSignInWithGoogle,
     signOut,
-    refreshUserProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

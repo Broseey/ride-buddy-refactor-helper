@@ -1,5 +1,5 @@
 
-import { Car, Calendar, HelpCircle, Info, Truck, DollarSign, MapPin, Users, Star, Settings, Building2 } from "lucide-react";
+import { Car, Calendar, HelpCircle, Info, Truck, DollarSign, MapPin, Users, Star, Settings } from "lucide-react";
 import { MenuItem } from "./NavbarTypes";
 
 export const useMenuItems = (isAuthenticated: boolean, userType: 'user' | 'driver' = 'user'): MenuItem[] => {
@@ -34,7 +34,6 @@ export const useMenuItems = (isAuthenticated: boolean, userType: 'user' | 'drive
       return [
         { icon: Car, label: "Book a Ride", path: "/" },
         { icon: Truck, label: "Drive", path: "/drive" },
-        { icon: Building2, label: "Partner with Uniride", path: "/partner" },
         { icon: HelpCircle, label: "Help", path: "/help" },
         { icon: Info, label: "About", path: "/about" },
       ];
